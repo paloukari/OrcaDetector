@@ -1,6 +1,8 @@
 # script to pull all data from the WHOI website
 
 # Import required modules
+from joblib import Parallel, delayed
+import multiprocessing
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -8,6 +10,15 @@ import urllib
 import os
 import sys
 from urllib.request import urlopen
+
+
+def downloadSample(samplename, filename):
+    sys.stdout.write('-')
+    sys.stdout.flush()
+
+    if not os.path.exists(filename):
+        urllib.request.urlretrieve(
+            'http://cis.whoi.edu/' + samplename, filename )
 
 
 def downloadTable(url, name, year):
@@ -24,26 +35,26 @@ def downloadTable(url, name, year):
     # Create an object of the first object that is class=database
     table = soup.find(class_='database')
 
-    # Find all the <tr> tag pairs, skip the first one, then for each.
+    downloadData = []
     for row in table.find_all('tr')[1:]:
-        # Create a variable of all the <td> tag pairs in each <tr> tag pair,
         col = row.find_all('a', href=True)
 
-        filename = col[0]['href']
-        filename_parts = col[0]['href'].split('/')
+        samplename = col[0]['href']
+        samplename_parts = col[0]['href'].split('/')
 
         dir = 'data/' + name + '/' + year
+        filename=dir + '/' + samplename_parts[-1:][0]
 
         if not os.path.exists(dir):
             os.makedirs(dir)
+        downloadData.append([samplename, filename])
 
-        sys.stdout.write('-')
-        sys.stdout.flush()
-        urllib.request.urlretrieve(
-            'http://cis.whoi.edu/' + filename, dir + '/' + filename_parts[-1:][0])
+    num_cores = multiprocessing.cpu_count()
+
+    results = Parallel(n_jobs=num_cores*2)(
+        delayed(downloadSample)(data[0], data[1]) for data in downloadData)
 
     print('->')
-
 
 def downloadAllAnimals(url):
     r = requests.get(url)
