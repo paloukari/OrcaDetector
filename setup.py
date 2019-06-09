@@ -11,7 +11,12 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', ]
+requirements = ['Click>=6.0', 
+                'joblib>=0.13.2',
+                'pynormalize>=0.1.4',
+                'kapre>=0.1.4',
+                'keras>=2.2.4', 
+                'tensorflow>=1.13.1']
 
 setup_requirements = [ ]
 
