@@ -1,6 +1,7 @@
 from vggish.vggish_params import *
 
 batch_size = 32
+file_max_size_seconds = 5 
 quantum_size = EXAMPLE_WINDOW_SECONDS
 quantum_hop = EXAMPLE_HOP_SECONDS
 frames_size = NUM_FRAMES

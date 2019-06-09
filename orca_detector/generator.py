@@ -79,7 +79,7 @@ class WavDataGenerator(keras.utils.Sequence):
         # X : (n_samples, *(frames_size, bands_size))
         'Generates data containing batch_size samples'
         # Initialization
-        X = np.empty((len(files_temp), params.frames_size, params.bands_size))
+        X = []
         # Generate data
         for i, file in enumerate(files_temp):
             data, sr = sf.read(
@@ -87,7 +87,6 @@ class WavDataGenerator(keras.utils.Sequence):
                 start = int(file.split(':')[1]), 
                 frames = int(file.split(':')[2]))
             # Store sample
-            X[i, ] = waveform_to_examples(data, sr)
-            y[i] = labels_temp[i]
+            X.append(waveform_to_examples(data, sr))
 
         return X

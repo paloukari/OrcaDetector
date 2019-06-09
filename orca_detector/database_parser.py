@@ -10,9 +10,13 @@ import params
 
 def _quantize_sample(label, file):
     with sf.SoundFile(file) as wav_file:
-        frames = int(params.quantum_size*wav_file.samplerate)
-        file_parts = np.arange(0, wav_file.frames, frames)
-        return [[label, f"{file}:{int(start)}:{frames}"] for start in file_parts]
+        # more than 1 sec
+        if wav_file.frames > wav_file.samplerate:
+            frames = int(params.file_max_size_seconds*wav_file.samplerate)
+            file_parts = np.arange(0, wav_file.frames, frames)
+            return [[label, f"{file}:{int(start)}:{frames}"] for start in file_parts]
+        else:
+            return []
 
 
 def _quantize_samples(samples):
