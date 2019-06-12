@@ -1,15 +1,15 @@
 # script to pull all data from the WHOI website
 
-# Import required modules
-from joblib import Parallel, delayed
 import multiprocessing
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import urllib
 import os
 import sys
+import urllib
 from urllib.request import urlopen
+
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from joblib import Parallel, delayed
 
 
 def downloadSample(samplename, filename):

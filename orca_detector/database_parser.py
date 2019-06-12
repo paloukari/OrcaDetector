@@ -1,10 +1,12 @@
-import soundfile as sf
-import pickle
-import numpy as np
-from sklearn.preprocessing import LabelEncoder
 import os
-from collections import defaultdict
+import pickle
 import random
+from collections import defaultdict
+
+import numpy as np
+import soundfile as sf
+from sklearn.preprocessing import LabelEncoder
+
 import params
 
 
@@ -53,6 +55,8 @@ def index_files(folder, split_percentage=.90):
 
         all_samples = defaultdict(list)
         for (dirpath, dirnames, filenames) in os.walk(folder):
+            filenames = [filename for filename in filenames if os.path.splitext(filename)[1].lower() == '.wav']
+            
             if len(filenames) == 0:
                 continue
             path, folder = os.path.split(dirpath)

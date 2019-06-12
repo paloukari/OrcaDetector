@@ -1,10 +1,12 @@
-import numpy as np
 import keras
 import librosa
-from vggish.mel_features import log_mel_spectrogram, frame
-import soundfile as sf
+import numpy as np
 import resampy
+import soundfile as sf
+
 import params
+from vggish.mel_features import frame, log_mel_spectrogram
+
 
 def _waveform_to_examples(data, sample_rate):
   # Convert to mono.
