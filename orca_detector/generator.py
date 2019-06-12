@@ -6,7 +6,7 @@ import soundfile as sf
 import resampy
 import params
 
-def waveform_to_examples(data, sample_rate):
+def _waveform_to_examples(data, sample_rate):
   # Convert to mono.
   if len(data.shape) > 1:
     data = np.mean(data, axis=1)
@@ -87,6 +87,6 @@ class WavDataGenerator(keras.utils.Sequence):
                 start = int(file.split(':')[1]), 
                 frames = int(file.split(':')[2]))
             # Store sample
-            X.append(waveform_to_examples(data, sr))
+            X.append(_waveform_to_examples(data, sr))
 
         return X

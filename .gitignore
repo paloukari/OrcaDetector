@@ -4,8 +4,6 @@ __pycache__/
 *$py.class
 .vscode
 data/
-*.ckpt
-*.npz
 
 # C extensions
 *.so

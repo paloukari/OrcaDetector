@@ -64,11 +64,11 @@ flags.DEFINE_string(
     'If none is provided, a synthetic sound is used.')
 
 flags.DEFINE_string(
-    'checkpoint', 'vggish_model.ckpt',
+    'checkpoint', '../data/vggish_model.ckpt',
     'Path to the VGGish checkpoint file.')
 
 flags.DEFINE_string(
-    'pca_params', 'vggish_pca_params.npz',
+    'pca_params', '../data/vggish_pca_params.npz',
     'Path to the VGGish PCA parameters file.')
 
 flags.DEFINE_string(

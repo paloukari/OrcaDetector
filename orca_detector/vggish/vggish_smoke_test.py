@@ -42,8 +42,8 @@ import vggish_slim
 print('\nTesting your install of VGGish\n')
 
 # Paths to downloaded VGGish files.
-checkpoint_path = 'vggish_model.ckpt'
-pca_params_path = 'vggish_pca_params.npz'
+checkpoint_path = '../data/vggish_model.ckpt'
+pca_params_path = '../data/vggish_pca_params.npz'
 
 # Relative tolerance of errors in mean and standard deviation of embeddings.
 rel_error = 0.1  # Up to 10%
