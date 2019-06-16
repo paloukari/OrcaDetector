@@ -41,9 +41,10 @@ import vggish_slim
 
 print('\nTesting your install of VGGish\n')
 
-# Paths to downloaded VGGish files.
-checkpoint_path = '../data/vggish_model.ckpt'
-pca_params_path = '../data/vggish_pca_params.npz'
+# Paths to downloaded VGGish files. When the Docker container is run
+# the data path on the host is expected to be mapped to /data 
+checkpoint_path = '/data/vggish_model.ckpt'
+pca_params_path = '/data/vggish_pca_params.npz'
 
 # Relative tolerance of errors in mean and standard deviation of embeddings.
 rel_error = 0.1  # Up to 10%

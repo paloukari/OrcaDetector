@@ -16,7 +16,8 @@ def _quantize_sample(label, file):
         if wav_file.frames > wav_file.samplerate:
             frames = int(params.file_max_size_seconds*wav_file.samplerate)
             file_parts = np.arange(0, wav_file.frames, frames)
-            return [[label, f"{file}:{int(start)}:{frames}"] for start in file_parts]
+            return [[label, '{}:{}:{}'.format(file, int(start), frames)] for start in file_parts]
+            #return [[label, f"{file}:{int(start)}:{frames}"] for start in file_parts]
         else:
             return []
 

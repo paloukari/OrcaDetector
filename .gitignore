@@ -1,9 +1,13 @@
+# Specifics to our project
+data/
+*.gz
+*.wav
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 .vscode
-data/
 
 # C extensions
 *.so
