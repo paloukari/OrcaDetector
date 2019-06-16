@@ -4,32 +4,31 @@ Audio classification demo using embeddings from the pretrained VGGish model.
 # Reference
 
 - [CNN Architectures for Large-Scale Audio Classification](https://research.google.com/pubs/pub45611.html), ICASSP 2017
+- VGGish original code: https://github.com/tensorflow/models/tree/master/research/audioset
 - Keras version: https://github.com/DTaoo/VGGish
 
 """
 
+import linecache
+import numpy as np
+import os
 import sys
 
-import numpy as np
-from numpy.random import seed, randint
+from keras.layers import GlobalAveragePooling2D
+from keras.models import Model
 from scipy.io import wavfile
 from sklearn import svm
-import linecache
-
-from keras.models import Model
-from keras.layers import GlobalAveragePooling2D
 
 # project-specific imports
 from vggish import VGGish
 import vggish_preprocess
 
-SOUND_FILE_PATH = '/test_data/'
-# SOUND_FILE_PATH = '/data/'
-TRAIN_FILE = '/mount/hudi/moe/soundnet/train.txt'
-TEST_FILE  = '/mount/hudi/moe/soundnet/test.txt'
+SOUND_FILE_PATH = '/data/'
+TRAIN_FILE = os.path.join(SOUND_FILE_PATH, 'train.txt')
+TEST_FILE  = os.path.join(SOUND_FILE_PATH, 'test.txt')
 
 # for consistency and replication
-seed(251)    
+np.random.seed(251)    
 
 def load_embeddings(file, sound_extractor):
     """
@@ -51,7 +50,7 @@ def load_embeddings(file, sound_extractor):
 
         length = sr * seg_len  # 5s segment
         range_high = len(wav_data) - length
-        random_start = randint(range_high, size=seg_num)
+        random_start = np.random.randint(range_high, size=seg_num)
 
         for j in range(seg_num):
             cur_wav = wav_data[random_start[j]:random_start[j] + length]
