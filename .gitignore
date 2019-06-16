@@ -1,5 +1,6 @@
 # Specifics to our project
 data/
+vggish_weights/
 *.gz
 *.wav
 
