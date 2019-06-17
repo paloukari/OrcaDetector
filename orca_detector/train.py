@@ -36,7 +36,9 @@ def run(**params):
 
     print_framework_versions()
     
-    train_files, train_labels, validate_files, validate_labels = index_files(DATA_PATH)
+    # load the dataset mappings from disk.
+    train_files, train_labels = load_dataset(DATA_PATH, 'train')
+    validate_files, validate_labels = load_dataset(DATA_PATH, 'validate')
     
     training_generator = WavDataGenerator(train_files,
                                           train_labels,
