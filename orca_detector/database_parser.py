@@ -1,3 +1,9 @@
+"""
+File to parse and label datafiles for the Orca project.
+
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
+"""
+
 import numpy as np
 import os
 import pickle
@@ -206,10 +212,9 @@ def load_dataset(data_path=DATA_PATH, dataset_type=None):
         indices_file = os.path.join(data_path, 'test_map.p')
     
     if os.path.exists(indices_file):
-        print('\nTrying to load {} dataset from {}'.format(dataset_type, indices_file))
         with open(indices_file, 'rb') as f:
             flattened = pickle.load(f)
-        print('Successfully loaded.')
+        print('\nLoad {} dataset from {}'.format(dataset_type, indices_file))
     else:
         raise Exception('ERROR: run database_parser.py to generate datafiles first.')
         

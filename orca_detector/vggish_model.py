@@ -1,12 +1,9 @@
 """
 VGGish model for Keras. A VGG-like model for audio classification
 
-# Reference
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 
-- [CNN Architectures for Large-Scale Audio Classification](https://research.google.com/pubs/pub45611.html), ICASSP 2017
-- VGGish original code: https://github.com/tensorflow/models/tree/master/research/audioset
-- Keras version: https://github.com/DTaoo/VGGish
-
+Adapted from https://github.com/DTaoo/VGGish
 """
 
 import numpy as np
@@ -60,7 +57,7 @@ class OrcaVGGish(object):
         out_dim = orca_params.NUM_CLASSES
 
         if input_shape is None:
-            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, 1)  # 496, 64
+            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, )  # 496, 64, [batch]
 
         if input_tensor is None:
             aud_input = Input(shape=input_shape, name='input_1')
@@ -102,7 +99,7 @@ class OrcaVGGish(object):
             inputs = aud_input
 
         # Instantiate model
-        self.model = Model(inputs, x, name='OrcaVGGish')
+        self.model = Model(inputs=inputs, outputs=x, name='OrcaVGGish')
 
         # load weights
         if load_weights:
@@ -114,6 +111,13 @@ class OrcaVGGish(object):
         
         # print representation of the model
         self.model.summary()
+
+        # Build and compile the model
+        print('Compiling model with {} optimizer and {} loss.' \
+              .format(orca_params.OPTIMIZER, orca_params.LOSS))
+        self.model.compile(optimizer=orca_params.OPTIMIZER,
+                           loss=orca_params.LOSS,
+                           metrics=['accuracy'])
 
     def get_model(self):
         
@@ -157,7 +161,7 @@ class VGGish(object):
             out_dim = params.EMBEDDING_SIZE  # 128
 
         if input_shape is None:
-            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, 1)  # 496, 64
+            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, )  # 496, 64, [batch]
 
         if input_tensor is None:
             aud_input = Input(shape=input_shape, name='input_1')

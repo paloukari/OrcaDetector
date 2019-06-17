@@ -1,5 +1,7 @@
 """
 Global parameters for the OrcaVGGish model.
+
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
 # Classification params
@@ -9,9 +11,10 @@ CLASSES = ['KillerWhale', 'FrasersDolphin']
 NUM_CLASSES = len(CLASSES) + 1
 
 # Weighting to account for imbalance when calculating loss
-#TODO: this will need to have integer keys after one-hot encoding
-CLASS_WEIGHTS = {'KillerWhale': 1.,
-                 'FrasersDolphin': 1.}
+#TODO: update weights based on observed balance
+CLASS_WEIGHTS = {0: 1., 1: 1., 2: 1.}
+OPTIMIZER = 'sgd'
+LOSS = 'categorical_crossentropy'
 
 # Model training
 EPOCHS = 10

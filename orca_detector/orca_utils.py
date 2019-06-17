@@ -1,6 +1,7 @@
 """
 Utility functions for the Orca project.
 
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
 # import matplotlib this way to run without a display

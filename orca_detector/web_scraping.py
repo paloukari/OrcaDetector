@@ -1,4 +1,9 @@
-# script to pull all data from the WHOI website
+"""
+Script to pull all data from the WHOI website (by permission of site owners)
+https://cis.whoi.edu/science/B/whalesounds/fullCuts.cfm
+
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
+"""
 
 import multiprocessing
 import os

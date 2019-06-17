@@ -1,14 +1,25 @@
-import hdf5
+"""
+Main file to train a model for the Orca project.
+
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
+"""
+
+import h5py
 import os
 import tensorflow as tf
+import datetime
 from keras.models import Sequential
-from generator import WavDataGenerator
-from database_parser import index_files
+
+# Reduce TensorFlow verbosity
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # project-specific imports
+import database_parser
 import orca_params
-import orca_utils
 import vggish_params as params
+from database_parser import load_dataset
+from generator import WavDataGenerator
+from orca_utils import plot_train_metrics, save_model
 from vggish_model import OrcaVGGish
 
 # data path; when Docker container is run, data path on the host
@@ -20,8 +31,8 @@ OUTPUT_PATH = '/results/'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 def print_framework_versions():
-    print(tf.VERSION)
-    print(tf.keras.__version__)
+    print('TensorFlow version: {}'.format(tf.VERSION))
+    print('Keras version: {}'.format(tf.keras.__version__))
 
 def create_network():
     """ Instantiate but don't yet fit the model."""
@@ -42,6 +53,7 @@ def run(**params):
     
     training_generator = WavDataGenerator(train_files,
                                           train_labels,
+                                          shuffle=True,
                                           **params)
 
     # test the generator
@@ -49,6 +61,7 @@ def run(**params):
 
     validation_generator = WavDataGenerator(validate_files,
                                             validate_labels,
+                                            shuffle=True,
                                             **params)
 
     model = create_network()

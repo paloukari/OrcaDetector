@@ -1,12 +1,9 @@
 """
 Audio classification demo using embeddings from the pretrained VGGish model.
-  
-# Reference
 
-- [CNN Architectures for Large-Scale Audio Classification](https://research.google.com/pubs/pub45611.html), ICASSP 2017
-- VGGish original code: https://github.com/tensorflow/models/tree/master/research/audioset
-- Keras version: https://github.com/DTaoo/VGGish
+W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 
+Adapted from https://github.com/DTaoo/VGGish
 """
 
 import linecache
