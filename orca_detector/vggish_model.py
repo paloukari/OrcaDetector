@@ -9,6 +9,7 @@ VGGish model for Keras. A VGG-like model for audio classification
 
 """
 
+import numpy as np
 import sys
 
 from keras.models import Model
@@ -89,10 +90,10 @@ class OrcaVGGish(object):
         x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_2')(x)
 
         # FC block (this is the space for our custom adaptations of the VGGish model)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool4')(x)
-        x = Flatten(name='flatten_')(x)
-        x = Dense(4096, activation='relu', name='orca_fc1/fc1_1')(x)
-        x = Dense(4096, activation='relu', name='orca_fc1/fc1_2')(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='orca_pool4')(x)
+        x = Flatten(name='orca_flatten_')(x)
+        x = Dense(4096, activation='relu', name='orca_fc1/orca_fc1_1')(x)
+        x = Dense(4096, activation='relu', name='orca_fc1/orca_fc1_2')(x)
         x = Dense(out_dim, activation='softmax', name='orca_softmax')(x)
 
         if input_tensor is not None:
@@ -242,4 +243,12 @@ if __name__ == '__main__':
                                  weights='audioset',
                                  pooling='avg').get_model()
 
+    # debugging output to verify that trained weights were loaded
+    layers = sound_extractor.layers
+    for l in layers:
+        print('layer={}'.format(l.name))
+        for w in l.get_weights():
+            print('  weights shape={}'.format(w.shape))
+            print('  weights max={}\n'.format(np.max(w)))
+        
     print('Done!')

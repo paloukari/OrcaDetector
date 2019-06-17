@@ -7,20 +7,20 @@ import numpy as np
 import soundfile as sf
 from sklearn.preprocessing import LabelEncoder
 
-import params
-
+# project-specific imports
+import orca_params
+import vggish_params as params
 
 def _quantize_sample(label, file):
     with sf.SoundFile(file) as wav_file:
         # more than 1 sec
         if wav_file.frames > wav_file.samplerate:
-            frames = int(params.file_max_size_seconds*wav_file.samplerate)
+            frames = int(params.FILE_MAX_SIZE_SECONDS * wav_file.samplerate)
             file_parts = np.arange(0, wav_file.frames, frames)
             return [[label, '{}:{}:{}'.format(file, int(start), frames)] for start in file_parts]
             #return [[label, f"{file}:{int(start)}:{frames}"] for start in file_parts]
         else:
             return []
-
 
 def _quantize_samples(samples):
     quantized_samples = [_quantize_sample(label, file) for [
@@ -29,8 +29,19 @@ def _quantize_samples(samples):
         item for sublist in quantized_samples for item in sublist]
     return flat_quantized_samples
 
-
 def _onehot(labels):
+    # TODO:
+    #  get rid of punctuation and spaces when converting directory names to class names
+    #  then check list of desired labels from orca_params.CLASSES
+    #  then one-hot encode all other classes as "Other"
+    #
+    #  Also, may need to convert this to a class and keep a member variable with the
+    #  one hot encoding mapping to make sure that train and validate use the same
+    #  mapping.
+    #
+    #  Also, when training, we need to write this mapping to disk as a text or json file
+    #  so that it can be picked up and loaded when running a test set.
+    
     classes = len(set(labels))
     encoder = LabelEncoder()
     encoder.fit(list(labels))
@@ -44,6 +55,7 @@ def _onehot(labels):
 
 def index_files(folder, split_percentage=.90):
 
+    # TODO: figure out how to handle test set
     train_indices_file = os.path.join(folder, 'train.tmp')
     validate_indices_file = os.path.join(folder, 'validate.tmp')
     if os.path.exists(train_indices_file) and os.path.exists(validate_indices_file):

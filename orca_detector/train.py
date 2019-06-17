@@ -1,38 +1,73 @@
+import hdf5
+import os
 import tensorflow as tf
 from keras.models import Sequential
 from generator import WavDataGenerator
 from database_parser import index_files
 
+# project-specific imports
+import orca_params
+import orca_utils
+import vggish_params as params
+from vggish_model import OrcaVGGish
+
+# data path; when Docker container is run, data path on the host
+# machine is expected to be mapped to /data
+DATA_PATH = '/data/'
+# results path; when Docker container is run, results path on the host
+# machine is expected to be mapped to /results
+OUTPUT_PATH = '/results/'
+RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
+
 def print_framework_versions():
     print(tf.VERSION)
     print(tf.keras.__version__)
 
-
 def create_network():
-    # TODO: Create the network
-    return model
+    """ Instantiate but don't yet fit the model."""
 
+    sound_extractor = OrcaVGGish(load_weights=True, 
+                                 weights='audioset',
+                                 pooling='avg').get_model()
+
+    return sound_extractor
 
 def run(**params):
 
     print_framework_versions()
-    train_files, train_labels, validate_files, validate_labels= index_files('../data')
     
-    training_generator = WavDataGenerator(
-        train_files, train_labels, **params)
+    train_files, train_labels, validate_files, validate_labels = index_files(DATA_PATH)
+    
+    training_generator = WavDataGenerator(train_files,
+                                          train_labels,
+                                          **params)
 
     # test the generator
     training_generator.__getitem__(0)
 
-    validation_generator = WavDataGenerator(
-        validate_files,  validate_labels, **params)
+    validation_generator = WavDataGenerator(validate_files,
+                                            validate_labels,
+                                            **params)
 
     model = create_network()
 
-    model.fit_generator(generator=training_generator,
-                        validation_data=validation_generator,
-                        use_multiprocessing=True,
-                        workers=1)
+    history = model.fit_generator(generator=training_generator,
+                                  validation_data=validation_generator,
+                                  class_weight=orca_params.CLASS_WEIGHTS,
+                                  epochs=orca_params.EPOCHS,
+                                  use_multiprocessing=True,
+                                  verbose=1,
+                                  workers=1)
+
+    # save loss and accuracy plots to disk
+    loss_fig_path, acc_fig_path = plot_train_metrics(history, RUN_TIMESTAMP)
+    print('Saved loss plot -> {}'.format(loss_fig_path))
+    print('Saved accuracy plot -> {}'.format(acc_fig_path))
+
+    # save json model config file and trained weights to disk
+    json_path, weights_path = save_model(model, RUN_TIMESTAMP)
+    print('Saved json config -> {}'.format(json_path))
+    print('Saved weights -> {}'.format(weights_path))
 
 
 if __name__ == '__main__':
