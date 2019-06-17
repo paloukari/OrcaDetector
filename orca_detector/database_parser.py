@@ -27,15 +27,20 @@ def _quantize_sample(label, file, sample_len=orca_params.FILE_MAX_SIZE_SECONDS):
     """
         Splits up a given file into non-overlapping segments of the specified length.
         Returns a list containing (label, 'file:start:frames') of each segment.
+        
+        Any segments that are too short are dropped.
     """
     
     with sf.SoundFile(file) as wav_file:
-        # more than 1 sec
-        if wav_file.frames > wav_file.samplerate:
-            frames = int(sample_len * wav_file.samplerate)
-            file_parts = np.arange(0, wav_file.frames, frames)
-            return [[label, '{}:{}:{}'.format(file, int(start), frames)] for start in file_parts]
-            #return [[label, f"{file}:{int(start)}:{frames}"] for start in file_parts]
+        # make sure sample is long enough
+        min_frames = int(sample_len * wav_file.samplerate)  # e.g. 2 * 16000
+        if wav_file.frames > min_frames:
+            file_parts = np.arange(0, wav_file.frames, min_frames)
+            sample_list = [[label, '{}:{}:{}'.format(file, int(start), min_frames)] for start in file_parts]
+
+            # truncate final sample which will be shorter than min required for a spectrogram
+            del sample_list[-1]
+            return sample_list
         else:
             return []
 
@@ -81,7 +86,7 @@ def _onehot(labels, data_path=DATA_PATH):
     if os.path.exists(label_encoder_file):
         renamed_file = '{}-old'.format(label_encoder_file)
         os.rename(label_encoder_file, renamed_file)
-        print('WARNING: Renamed previous file to {}'.format(label_encoder_file))
+        print('WARNING: Renamed previous file to {}'.format(renamed_file))
     with open(label_encoder_file, 'wb') as fp:
         pickle.dump(encoder, fp)
         print('Saved label encoder to {}'.format(label_encoder_file))
@@ -146,6 +151,7 @@ def save_index_files(data_path=DATA_PATH, train_percentage=.70, validate_percent
     test = defaultdict(list)
 
     # TODO: change train/val/test split to happen *after* quantization
+    
     # do a stratified train/val/test split
     for label, files in all_samples.items():
         if len(files) < 10:

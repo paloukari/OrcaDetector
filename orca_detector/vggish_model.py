@@ -57,8 +57,9 @@ class OrcaVGGish(object):
         out_dim = orca_params.NUM_CLASSES
 
         if input_shape is None:
-            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, )  # 496, 64, [batch]
+            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, 1)  # 496, 64, 1
 
+        # VGGish model was trained with a "batch-first" matrix format.
         if input_tensor is None:
             aud_input = Input(shape=input_shape, name='input_1')
         else:
@@ -67,8 +68,10 @@ class OrcaVGGish(object):
             else:
                 aud_input = input_tensor
 
+        # TODO: determine if we need a BatchNormalization layer to process input before
+        #   feeding to the pretrained VGGish layers.
+        
         # Build VGGish model
-
         # Block 1
         x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(aud_input)
         x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
