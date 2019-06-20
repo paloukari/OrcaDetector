@@ -4,6 +4,12 @@ Global parameters for the OrcaVGGish model.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
+# Paths to key volumes mapped into the Docker container
+DATA_PATH        = '/data/'
+OUTPUT_PATH      = '/results/'
+WEIGHTS_PATH     = '/weights/vggish_audioset_weights_without_fc2.h5'
+WEIGHTS_PATH_TOP = '/weights/vggish_audioset_weights.h5'
+
 # Classification params
 CLASSES = ['KillerWhale', 'FrasersDolphin']
 

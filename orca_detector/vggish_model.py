@@ -16,12 +16,7 @@ from keras import backend as K
 
 # project-specific imports
 import orca_params
-import vggish_params as params
-
-# weight path; when Docker container is run, weights path on the host
-# machine is expected to be mapped to /weights
-WEIGHTS_PATH = '/weights/vggish_audioset_weights_without_fc2.h5'
-WEIGHTS_PATH_TOP = '/weights/vggish_audioset_weights.h5'
+import mel_params
 
 class OrcaVGGish(object):    
     """
@@ -57,23 +52,23 @@ class OrcaVGGish(object):
         out_dim = orca_params.NUM_CLASSES
 
         if input_shape is None:
-            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, 1)  # 496, 64, 1
+            input_shape = (mel_params.NUM_FRAMES, mel_params.NUM_BANDS, 1)  # 496, 64, 1
 
         # VGGish model was trained with a "batch-first" matrix format.
         if input_tensor is None:
-            aud_input = Input(shape=input_shape, name='input_1')
+            audio_input = Input(shape=input_shape, name='input_1')
         else:
             if not K.is_keras_tensor(input_tensor):
-                aud_input = Input(tensor=input_tensor, shape=input_shape, name='input_1')
+                audio_input = Input(tensor=input_tensor, shape=input_shape, name='input_1')
             else:
-                aud_input = input_tensor
+                audio_input = input_tensor
 
         # TODO: determine if we need a BatchNormalization layer to process input before
         #   feeding to the pretrained VGGish layers.
         
         # Build VGGish model
         # Block 1
-        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(aud_input)
+        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(audio_input)
         x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
 
         # Block 2
@@ -99,7 +94,7 @@ class OrcaVGGish(object):
         if input_tensor is not None:
             inputs = get_source_inputs(input_tensor)
         else:
-            inputs = aud_input
+            inputs = audio_input
 
         # Instantiate model
         self.model = Model(inputs=inputs, outputs=x, name='OrcaVGGish')
@@ -107,8 +102,8 @@ class OrcaVGGish(object):
         # load weights
         if load_weights:
             if weights == 'audioset':
-                print('Pretrained weights will be loaded from {}'.format(WEIGHTS_PATH))
-                self.model.load_weights(WEIGHTS_PATH, by_name=True)
+                print('Pretrained weights will be loaded from {}'.format(orca_params.WEIGHTS_PATH))
+                self.model.load_weights(orca_params.WEIGHTS_PATH, by_name=True)
             else:
                 raise Exception("ERROR: failed to load weights")
         
@@ -161,23 +156,23 @@ class VGGish(object):
                              '(pre-training on audioset).')
 
         if out_dim is None:
-            out_dim = params.EMBEDDING_SIZE  # 128
+            out_dim = mel_params.EMBEDDING_SIZE  # 128
 
         if input_shape is None:
-            input_shape = (params.NUM_FRAMES, params.NUM_BANDS, )  # 496, 64, [batch]
+            input_shape = (mel_params.NUM_FRAMES, mel_params.NUM_BANDS, )  # 496, 64, [batch]
 
         if input_tensor is None:
-            aud_input = Input(shape=input_shape, name='input_1')
+            audio_input = Input(shape=input_shape, name='input_1')
         else:
             if not K.is_keras_tensor(input_tensor):
-                aud_input = Input(tensor=input_tensor, shape=input_shape, name='input_1')
+                audio_input = Input(tensor=input_tensor, shape=input_shape, name='input_1')
             else:
-                aud_input = input_tensor
+                audio_input = input_tensor
 
         # Build VGGish model
 
         # Block 1
-        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(aud_input)
+        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(audio_input)
         x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
 
         # Block 2
@@ -210,7 +205,7 @@ class VGGish(object):
         if input_tensor is not None:
             inputs = get_source_inputs(input_tensor)
         else:
-            inputs = aud_input
+            inputs = audio_input
 
         # Instantiate model
         self.model = Model(inputs, x, name='VGGish')
@@ -219,11 +214,11 @@ class VGGish(object):
         if load_weights:
             if weights == 'audioset':
                 if include_top:
-                    print('Weights will be loaded from {}'.format(WEIGHTS_PATH_TOP))
-                    self.model.load_weights(WEIGHTS_PATH_TOP)
+                    print('Weights will be loaded from {}'.format(orca_params.WEIGHTS_PATH_TOP))
+                    self.model.load_weights(orca_params.WEIGHTS_PATH_TOP)
                 else:
-                    print('Weights will be loaded from {}'.format(WEIGHTS_PATH))
-                    self.model.load_weights(WEIGHTS_PATH)
+                    print('Weights will be loaded from {}'.format(orca_params.WEIGHTS_PATH))
+                    self.model.load_weights(orca_params.WEIGHTS_PATH)
             else:
                 raise Exception("ERROR: failed to load weights")
         

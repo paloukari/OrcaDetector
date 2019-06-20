@@ -2,6 +2,8 @@
 Utility functions for the Orca project.
 
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
+
+Adapted from: https://github.com/mwinton/w266-final-project
 """
 
 # import matplotlib this way to run without a display
@@ -12,10 +14,6 @@ import os
 
 # project-specific imports
 import orca_params
-
-# results path; when Docker container is run, results path on the host
-# machine is expected to be mapped to /results
-OUTPUT_PATH = '/results/'
 
 def plot_train_metrics(model_history, run_timestamp='unspecified'):
     """
@@ -36,8 +34,8 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     val_acc      = model_history.history['val_acc']
 
     # define filenames
-    loss_fig_path = os.path.join(OUTPUT_PATH, 'orca_train_loss_{}.png'.format(run_timestamp))
-    acc_fig_path  = os.path.join(OUTPUT_PATH, 'orca_train_acc_{}.png'.format(run_timestamp))
+    loss_fig_path = os.path.join(orca_params.OUTPUT_PATH, 'orca_train_loss_{}.png'.format(run_timestamp))
+    acc_fig_path  = os.path.join(orca_params.OUTPUT_PATH, 'orca_train_acc_{}.png'.format(run_timestamp))
 
     # generate and save loss plot
     plt.plot(train_losses)
@@ -79,16 +77,16 @@ def save_model(model, run_timestamp='unspecified'):
     """
     
     # save model config
-    output_json = os.path.join(OUTPUT_PATH, 'orca_config_{}.json'.format(run_timestamp))
+    output_json = os.path.join(orca_params.OUTPUT_PATH, 'orca_config_{}.json'.format(run_timestamp))
     with open(output_json, 'w') as json_file:
         json_file.write(model.to_json())
 
     # save trained model weights
-    output_weights = os.path.join(OUTPUT_PATH, 'orca_weights_{}.hdf5'.format(run_timestamp))
+    output_weights = os.path.join(orca_params.OUTPUT_PATH, 'orca_weights_{}.hdf5'.format(run_timestamp))
     model.save_weights(output_weights)
     
     # Create symbolic link to the most recent weights (to use for testing)
-    symlink_path = os.path.join(OUTPUT_PATH, 'orca_weights_latest.hdf5')
+    symlink_path = os.path.join(orca_params.OUTPUT_PATH, 'orca_weights_latest.hdf5')
     try:
         os.symlink(output_weights, symlink_path)
     except FileExistsError:

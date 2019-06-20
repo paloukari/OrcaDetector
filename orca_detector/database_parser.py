@@ -19,10 +19,6 @@ from sklearn.preprocessing import LabelEncoder
 import orca_params
 import vggish_params as params
 
-# data path; when Docker container is run, data path on the host
-# machine is expected to be mapped to /data
-DATA_PATH = '/data/'
-
 def _quantize_sample(label, file, sample_len=orca_params.FILE_MAX_SIZE_SECONDS):
     """
         Splits up a given file into non-overlapping segments of the specified length.
@@ -54,7 +50,7 @@ def _quantize_samples(samples):
         item for sublist in quantized_samples for item in sublist]
     return flat_quantized_samples
 
-def _onehot(labels, data_path=DATA_PATH):
+def _onehot(labels, data_path=orca_params.DATA_PATH):
     """
         Converts labels from strings to integers.  All classes that aren't in
         orca_params.CLASSES are mapped to 'Other'.
@@ -91,11 +87,21 @@ def _onehot(labels, data_path=DATA_PATH):
         pickle.dump(encoder, fp)
         print('Saved label encoder to {}'.format(label_encoder_file))
     
-
     return onehot_encoded_labels
 
+def _backup_old_datasets(file_list):
+    """
+        Rename files in the file_list to *-old to provide one level of "undo".
+    """
+    
+    for fname in file_list:
+        if os.path.exists(fname):
+            renamed_file = '{}-old'.format(fname)
+            os.rename(fname, renamed_file)
+            print('WARNING: Renamed {} to {}'.format(fname, renamed_file))
 
-def save_index_files(data_path=DATA_PATH, train_percentage=.70, validate_percentage=0.20):
+
+def save_index_files(data_path=orca_params.DATA_PATH, train_percentage=.70, validate_percentage=0.20):
     """
         Index files and create a train/val/test split.  Note that label one-hot
         encoding is *not* done at this point, nor are undesired classes converted
@@ -107,21 +113,8 @@ def save_index_files(data_path=DATA_PATH, train_percentage=.70, validate_percent
     test_indices_file = os.path.join(data_path, 'test_map.p')
     
     # rename old files instead of overwriting.
-    if os.path.exists(train_indices_file):
-        renamed_file = '{}-old'.format(train_indices_file)
-        os.rename(train_indices_file, renamed_file)
-        print('WARNING: Renamed previous file to {}'.format(renamed_file))
+    _backup_old_datasets([train_indices_file, validate_indices_file, test_indices_file])
 
-    if os.path.exists(validate_indices_file):
-        renamed_file = '{}-old'.format(validate_indices_file)
-        os.rename(validate_indices_file, renamed_file)
-        print('WARNING: Renamed previous file to {}'.format(renamed_file))
-        
-    if os.path.exists(test_indices_file):
-        renamed_file = '{}-old'.format(test_indices_file)
-        os.rename(test_indices_file, renamed_file)
-        print('WARNING: Renamed previous file to {}'.format(renamed_file))
-            
     # build a defaultdict of all of the samples read from disk.
     # key will be the class label (text). Value will be a list of all file paths
     total_files = 0
@@ -155,7 +148,7 @@ def save_index_files(data_path=DATA_PATH, train_percentage=.70, validate_percent
     # do a stratified train/val/test split
     for label, files in all_samples.items():
         if len(files) < 10:
-            continue  # don't both to shuffle
+            continue  # don't bother to shuffle
         random.shuffle(files)
         num_train_files = int((len(files) + 1) * train_percentage)
         num_validate_files = int((len(files) + 1) * validate_percentage)
@@ -197,8 +190,7 @@ def save_index_files(data_path=DATA_PATH, train_percentage=.70, validate_percent
         pickle.dump(test_flattened, fp)
         print('Saved test set to {}'.format(test_indices_file))
 
-
-def load_dataset(data_path=DATA_PATH, dataset_type=None):
+def load_dataset(data_path=orca_params.DATA_PATH, dataset_type=None):
     """
         Load the lists of files and labels for train, val, or test set.  One-hot
         encoding of the labels is performed at this time based on the desired

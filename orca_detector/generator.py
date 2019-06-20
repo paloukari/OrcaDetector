@@ -14,11 +14,11 @@ import resampy
 import soundfile as sf
 
 # project-specific imports
+import mel_params
 import orca_params
-import vggish_params as params
 from mel_features import frame, log_mel_spectrogram
 
-def _waveform_to_examples(data, sample_rate):
+def _waveform_to_mel_spectrogram_segments(data, sample_rate):
     """
     Converts audio from a single wav file into an array of examples for VGGish.
 
@@ -33,7 +33,7 @@ def _waveform_to_examples(data, sample_rate):
         3-D np.array of shape [num_examples, num_frames, num_bands] which represents
         a sequence of examples, each of which contains a patch of log mel
         spectrogram, covering num_frames frames of audio and num_bands mel frequency
-        bands, where the frame length is params.STFT_HOP_LENGTH_SECONDS.
+        bands, where the frame length is mel_params.STFT_HOP_LENGTH_SECONDS.
 
     IMPORTANT: if data.shape < (80000, ) then log_mel_examples.shape=(0, 496, 64).
         The zero is problematic downstream, so code will have to check for that.
@@ -46,25 +46,25 @@ def _waveform_to_examples(data, sample_rate):
         print('DEBUG: audio channels after={}'.format(data.shape))
         
     # Resample to the rate assumed by VGGish.
-    if sample_rate != params.SAMPLE_RATE:
-        data = resampy.resample(data, sample_rate, params.SAMPLE_RATE)
+    if sample_rate != mel_params.SAMPLE_RATE:
+        data = resampy.resample(data, sample_rate, mel_params.SAMPLE_RATE)
 
     # Compute log mel spectrogram features.
     log_mel = log_mel_spectrogram(data,
-                                  audio_sample_rate=params.SAMPLE_RATE,
-                                  log_offset=params.LOG_OFFSET,
-                                  window_length_secs=params.STFT_WINDOW_LENGTH_SECONDS,
-                                  hop_length_secs=params.STFT_HOP_LENGTH_SECONDS,
-                                  num_mel_bins=params.NUM_MEL_BINS,
-                                  lower_edge_hertz=params.MEL_MIN_HZ,
-                                  upper_edge_hertz=params.MEL_MAX_HZ )
+                                  audio_sample_rate=mel_params.SAMPLE_RATE,
+                                  log_offset=mel_params.LOG_OFFSET,
+                                  window_length_secs=mel_params.STFT_WINDOW_LENGTH_SECONDS,
+                                  hop_length_secs=mel_params.STFT_HOP_LENGTH_SECONDS,
+                                  num_mel_bins=mel_params.NUM_MEL_BINS,
+                                  lower_edge_hertz=mel_params.MEL_MIN_HZ,
+                                  upper_edge_hertz=mel_params.MEL_MAX_HZ )
 
     # Frame features into examples.
-    features_sample_rate  = 1.0 / params.STFT_HOP_LENGTH_SECONDS
-    example_window_length = int(round(params.EXAMPLE_WINDOW_SECONDS * features_sample_rate))
-    example_hop_length    = int(round(params.EXAMPLE_HOP_SECONDS * features_sample_rate))
+    features_sample_rate  = 1.0 / mel_params.STFT_HOP_LENGTH_SECONDS
+    example_window_length = int(round(mel_params.EXAMPLE_WINDOW_SECONDS * features_sample_rate))
+    example_hop_length    = int(round(mel_params.EXAMPLE_HOP_SECONDS * features_sample_rate))
     
-    # If log_mel.shape[0] < params.NUM_FRAMES, log_mel_examples will return
+    # If log_mel.shape[0] < mel_params.NUM_FRAMES, log_mel_examples will return
     #   an array with log_mel_examples.shape[0] = 0
     log_mel_examples = frame(log_mel,
                              window_length=example_window_length,
@@ -149,7 +149,7 @@ class WavDataGenerator(keras.utils.Sequence):
         """
         
         num_files = len(batch_files)
-        X = np.zeros((num_files, params.NUM_FRAMES, params.NUM_BANDS, 1))
+        X = np.zeros((num_files, mel_params.NUM_FRAMES, mel_params.NUM_BANDS, 1))
         
         # Generate data from the appropriate segment of the audio file
         for i, file in enumerate(batch_files):
@@ -157,12 +157,12 @@ class WavDataGenerator(keras.utils.Sequence):
                                         start = int(file.split(':')[1]), 
                                         frames = int(file.split(':')[2]))
             # Transform to log mel spectrogram format and store sample
-            cur_spectro = _waveform_to_examples(data, sample_rate)
-            cur_spectro = np.expand_dims(cur_spectro, 3)
+            spectrogram = _waveform_to_mel_spectrogram_segments(data, sample_rate)
+            spectrogram = np.expand_dims(spectrogram, 3)
             
             # anticipate case where sound sample was too small to create the spectrogram
-            if cur_spectro.shape[0] > 0:
-                X[i, :, :, :] = cur_spectro
+            if spectrogram.shape[0] > 0:
+                X[i, :, :, :] = spectrogram
 
         return X
     

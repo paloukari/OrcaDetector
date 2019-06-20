@@ -16,18 +16,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # project-specific imports
 import database_parser
 import orca_params
-import vggish_params as params
 from database_parser import load_dataset
 from generator import WavDataGenerator
 from orca_utils import plot_train_metrics, save_model
 from vggish_model import OrcaVGGish
 
-# data path; when Docker container is run, data path on the host
-# machine is expected to be mapped to /data
-DATA_PATH = '/data/'
-# results path; when Docker container is run, results path on the host
-# machine is expected to be mapped to /results
-OUTPUT_PATH = '/results/'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 def print_framework_versions():
@@ -48,8 +41,8 @@ def run(**params):
     print_framework_versions()
     
     # load the dataset mappings from disk.
-    train_files, train_labels = load_dataset(DATA_PATH, 'train')
-    validate_files, validate_labels = load_dataset(DATA_PATH, 'validate')
+    train_files, train_labels = load_dataset(orca_params.DATA_PATH, 'train')
+    validate_files, validate_labels = load_dataset(orca_params.DATA_PATH, 'validate')
     
     training_generator = WavDataGenerator(train_files,
                                           train_labels,
