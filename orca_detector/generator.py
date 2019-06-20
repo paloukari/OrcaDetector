@@ -1,3 +1,5 @@
+# -*- coding: future_fstrings -*-
+
 """
 Keras custom generators for the Orca project.
 

@@ -1,3 +1,5 @@
+# -*- coding: future_fstrings -*-
+
 """
 Utility functions for the Orca project.
 

@@ -20,6 +20,7 @@ docker==4.0.1
 docutils==0.14
 entrypoints==0.3
 Flask==1.0.3
+future-fstrings==1.2.0
 gast==0.2.2
 gitdb2==2.0.5
 GitPython==2.1.11

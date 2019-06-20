@@ -1,3 +1,5 @@
+# -*- coding: future_fstrings -*-
+
 """
 Script to pull all data from the WHOI website (by permission of site owners)
 https://cis.whoi.edu/science/B/whalesounds/fullCuts.cfm
