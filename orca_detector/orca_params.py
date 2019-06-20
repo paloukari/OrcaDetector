@@ -4,6 +4,14 @@ Global parameters for the OrcaVGGish model.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
+from enum import IntEnum
+
+class DatasetType(IntEnum):
+    """ Enumeration with the possible dataset types. """
+    TRAIN = 0
+    VALIDATE = 1
+    TEST = 2
+
 # Paths to key volumes mapped into the Docker container
 DATA_PATH        = '/data/'
 OUTPUT_PATH      = '/results/'
