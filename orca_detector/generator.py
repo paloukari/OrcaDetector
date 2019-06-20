@@ -43,9 +43,9 @@ def _waveform_to_mel_spectrogram_segments(data, sample_rate):
     
     # Convert to mono if necessary.
     if len(data.shape) > 1:
-        print('DEBUG: audio channels before={}'.format(data.shape))
+        print(f'DEBUG: audio channels before={data.shape}')
         data = np.mean(data, axis=1)
-        print('DEBUG: audio channels after={}'.format(data.shape))
+        print(f'DEBUG: audio channels after={data.shape}')
         
     # Resample to the rate assumed by VGGish.
     if sample_rate != mel_params.SAMPLE_RATE:
@@ -72,8 +72,8 @@ def _waveform_to_mel_spectrogram_segments(data, sample_rate):
                              window_length=example_window_length,
                              hop_length=example_hop_length)
     
-    # print('DEBUG: data.shape={}'.format(data.shape))
-    # print('DEBUG: log_mel_examples.shape={}'.format(log_mel_examples.shape))
+    # print(f'DEBUG: data.shape={data.shape}')
+    # print(f'DEBUG: log_mel_examples.shape={log_mel_examples.shape}')
     if log_mel_examples.shape[0] == 0:
         print('\nWARNING: audio sample too short! Using all zeros for that example.\n')
     return log_mel_examples
@@ -175,8 +175,8 @@ class WavDataGenerator(keras.utils.Sequence):
             arrays, thus reducing the batch size.
         """
 
-#         print('DEBUG: np.count_nonzero (ax=0)={}'.format(np.count_nonzero(X, axis=0)))
+#         print(f'DEBUG: np.count_nonzero (ax=0)={np.count_nonzero(X, axis=0)}')
 #         if np.count_nonzero(X, axis=0) != self.batch_size:
-#             pprint.pprint('DEBUG: np.nonzero(X)={}'.format(np.nonzero(X)[0]))
+#             pprint.pprint(f'DEBUG: np.nonzero(X)={np.nonzero(X)[0]}')
 
         return X, batch_files

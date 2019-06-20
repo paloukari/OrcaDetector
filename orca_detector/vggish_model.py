@@ -104,7 +104,7 @@ class OrcaVGGish(object):
         # load weights
         if load_weights:
             if weights == 'audioset':
-                print('Pretrained weights will be loaded from {}'.format(orca_params.WEIGHTS_PATH))
+                print(f'Pretrained weights will be loaded from {orca_params.WEIGHTS_PATH}')
                 self.model.load_weights(orca_params.WEIGHTS_PATH, by_name=True)
             else:
                 raise Exception("ERROR: failed to load weights")
@@ -113,8 +113,7 @@ class OrcaVGGish(object):
         self.model.summary()
 
         # Build and compile the model
-        print('Compiling model with {} optimizer and {} loss.' \
-              .format(orca_params.OPTIMIZER, orca_params.LOSS))
+        print(f'Compiling model with {orca_params.OPTIMIZER} optimizer and {orca_params.LOSS} loss.')
         self.model.compile(optimizer=orca_params.OPTIMIZER,
                            loss=orca_params.LOSS,
                            metrics=['accuracy'])
@@ -216,10 +215,10 @@ class VGGish(object):
         if load_weights:
             if weights == 'audioset':
                 if include_top:
-                    print('Weights will be loaded from {}'.format(orca_params.WEIGHTS_PATH_TOP))
+                    print(f'Weights will be loaded from {orca_params.WEIGHTS_PATH_TOP}')
                     self.model.load_weights(orca_params.WEIGHTS_PATH_TOP)
                 else:
-                    print('Weights will be loaded from {}'.format(orca_params.WEIGHTS_PATH))
+                    print(f'Weights will be loaded from {orca_params.WEIGHTS_PATH}')
                     self.model.load_weights(orca_params.WEIGHTS_PATH)
             else:
                 raise Exception("ERROR: failed to load weights")
@@ -250,9 +249,9 @@ if __name__ == '__main__':
     # debugging output to verify that trained weights were loaded
     layers = sound_extractor.layers
     for l in layers:
-        print('layer={}'.format(l.name))
+        print(f'layer={l.name}')
         for w in l.get_weights():
-            print('  weights shape={}'.format(w.shape))
-            print('  weights max={}\n'.format(np.max(w)))
+            print(f'  weights shape={w.shape}')
+            print(f'  weights max={np.max(w)}\n')
         
     print('Done!')

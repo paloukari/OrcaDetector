@@ -36,8 +36,8 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     val_acc      = model_history.history['val_acc']
 
     # define filenames
-    loss_fig_path = os.path.join(orca_params.OUTPUT_PATH, 'orca_train_loss_{}.png'.format(run_timestamp))
-    acc_fig_path  = os.path.join(orca_params.OUTPUT_PATH, 'orca_train_acc_{}.png'.format(run_timestamp))
+    loss_fig_path = os.path.join(orca_params.OUTPUT_PATH, f'orca_train_loss_{run_timestamp}.png')
+    acc_fig_path  = os.path.join(orca_params.OUTPUT_PATH, f'orca_train_acc_{run_timestamp}.png')
 
     # generate and save loss plot
     plt.plot(train_losses)
@@ -45,7 +45,7 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     plt.xticks(np.arange(0, len(train_losses), step=1))
     plt.xlabel('Epoch Number')
     plt.ylabel('Loss')
-    plt.title('Orca Model\nRun time: {}'.format(run_timestamp))
+    plt.title(f'Orca Model\nRun time: {run_timestamp}')
     plt.legend(('Training', 'Validation'))
     plt.savefig(loss_fig_path)
 
@@ -59,7 +59,7 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     plt.xticks(np.arange(0, len(train_acc), step=1))
     plt.xlabel('Epoch Number')
     plt.ylabel('Accuracy')
-    plt.title('Orca Model\nRun time: {}'.format(run_timestamp))
+    plt.title(f'Orca Model\nRun time: {run_timestamp}')
     plt.legend(('Training', 'Validation'))
     plt.savefig(acc_fig_path)
 
@@ -79,12 +79,12 @@ def save_model(model, run_timestamp='unspecified'):
     """
     
     # save model config
-    output_json = os.path.join(orca_params.OUTPUT_PATH, 'orca_config_{}.json'.format(run_timestamp))
+    output_json = os.path.join(orca_params.OUTPUT_PATH, f'orca_config_{run_timestamp}.json')
     with open(output_json, 'w') as json_file:
         json_file.write(model.to_json())
 
     # save trained model weights
-    output_weights = os.path.join(orca_params.OUTPUT_PATH, 'orca_weights_{}.hdf5'.format(run_timestamp))
+    output_weights = os.path.join(orca_params.OUTPUT_PATH, f'orca_weights_{run_timestamp}.hdf5')
     model.save_weights(output_weights)
     
     # Create symbolic link to the most recent weights (to use for testing)
@@ -95,7 +95,7 @@ def save_model(model, run_timestamp='unspecified'):
         # If the symlink already exist, delete and create again
         os.remove(symlink_path)
         os.symlink(output_weights, symlink_path)
-    print('Created symbolic link to final weights -> {}'.format(symlink_path))
+    print(f'Created symbolic link to final weights -> {symlink_path}')
     
     return output_json, output_weights
 

@@ -20,7 +20,6 @@ from sklearn.preprocessing import LabelEncoder
 # project-specific imports
 import orca_params
 from orca_params import DatasetType
-import vggish_params as params
 
 def _label_files(data_path=orca_params.DATA_PATH):
     """
