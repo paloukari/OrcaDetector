@@ -1,7 +1,7 @@
 # OrcaDetector setup
 
 This UC Berkeley Master of Information in Data Science capstone project was developed by
-[Spyros Garyfallos](https://github.com/paloukari), [Ram Iyer](https://github.com/ram-iyer), and [Mike Winton](https://github.com/mwinton).
+[Spyros Garyfallos](mailto:spiros.garifallos@berkeley.edu ), [Ram Iyer](mailto:ram.iyer@berkeley.edu), and [Mike Winton](mailto:mwinton@berkeley.edu).
 
 ## 0. Provision a cloud GPU machine
 
