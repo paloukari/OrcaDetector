@@ -236,7 +236,7 @@ class OrcaVGGish(VGGish):
                          weights=weights, 
                          input_tensor=input_tensor, 
                          input_shape=input_shape,
-                         out_dim=out_dim, 
+                         out_dim=orca_params.NUM_CLASSES, 
                          include_top=False, 
                          pooling=pooling,
                          optimizer=optimizer, 
