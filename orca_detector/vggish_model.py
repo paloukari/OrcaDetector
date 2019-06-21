@@ -12,122 +12,76 @@ import numpy as np
 import sys
 
 from keras.models import Model
-from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, GlobalAveragePooling2D, GlobalMaxPooling2D
+from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, \
+                         GlobalAveragePooling2D, GlobalMaxPooling2D
 from keras.engine.topology import get_source_inputs
 from keras import backend as K
 
 # project-specific imports
-import orca_params
 import mel_params
-
-class OrcaVGGish(object):    
-    """
-    An adaption of the VGGish architecture for our audio classification model.
-    This model is never trained if weights aren't provided!
-    """
-    
-    def __init__ (self,
-                  load_weights=True, 
-                  weights='audioset', 
-                  input_tensor=None,
-                  input_shape=None,
-                  out_dim=None,
-                  pooling='avg'):
-
-        """
-        :param load_weights: if load weights
-        :param weights: loads weights pre-trained on a preliminary version of YouTube-8M.
-        :param input_tensor: input_layer
-        :param input_shape: input data shape
-        :param out_dim: output dimension
-        :param pooling: pooling type over the non-top network, 'avg' or 'max'
-
-        :return: A Keras model instance.
-        """
-
-        # Validate parameters
-        if weights not in {'audioset', None}:
-            raise ValueError('The `weights` argument should be either '
-                             '`None` (random initialization) or `audioset` '
-                             '(pre-training on audioset).')
-
-        out_dim = orca_params.NUM_CLASSES
-
-        if input_shape is None:
-            input_shape = (mel_params.NUM_FRAMES, mel_params.NUM_BANDS, 1)  # 496, 64, 1
-
-        # VGGish model was trained with a "batch-first" matrix format.
-        if input_tensor is None:
-            audio_input = Input(shape=input_shape, name='input_1')
-        else:
-            if not K.is_keras_tensor(input_tensor):
-                audio_input = Input(tensor=input_tensor, shape=input_shape, name='input_1')
-            else:
-                audio_input = input_tensor
-
-        # TODO: determine if we need a BatchNormalization layer to process input before
-        #   feeding to the pretrained VGGish layers.
-        
-        # Build VGGish model
-        # Block 1
-        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(audio_input)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
-
-        # Block 2
-        x = Conv2D(128, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv2')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool2')(x)
-
-        # Block 3
-        x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv3/conv3_1')(x)
-        x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv3/conv3_2')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool3')(x)
-
-        # Block 4
-        x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_1')(x)
-        x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_2')(x)
-
-        # FC block (this is the space for our custom adaptations of the VGGish model)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='orca_pool4')(x)
-        x = Flatten(name='orca_flatten_')(x)
-        x = Dense(4096, activation='relu', name='orca_fc1/orca_fc1_1')(x)
-        x = Dense(4096, activation='relu', name='orca_fc1/orca_fc1_2')(x)
-        x = Dense(out_dim, activation='softmax', name='orca_softmax')(x)
-
-        if input_tensor is not None:
-            inputs = get_source_inputs(input_tensor)
-        else:
-            inputs = audio_input
-
-        # Instantiate model
-        self.model = Model(inputs=inputs, outputs=x, name='OrcaVGGish')
-
-        # load weights
-        if load_weights:
-            if weights == 'audioset':
-                print(f'Pretrained weights will be loaded from {orca_params.WEIGHTS_PATH}')
-                self.model.load_weights(orca_params.WEIGHTS_PATH, by_name=True)
-            else:
-                raise Exception("ERROR: failed to load weights")
-        
-        # print representation of the model
-        self.model.summary()
-
-        # Build and compile the model
-        print(f'Compiling model with {orca_params.OPTIMIZER} optimizer and {orca_params.LOSS} loss.')
-        self.model.compile(optimizer=orca_params.OPTIMIZER,
-                           loss=orca_params.LOSS,
-                           metrics=['accuracy'])
-
-    def get_model(self):
-        
-        return self.model
-    
+import orca_params
 
 class VGGish(object):    
     """
     An implementation of the original VGGish architecture.
     This model is never trained if weights aren't provided!
+    Model structure and weights are from https://github.com/DTaoo/VGGish
     """
+    
+    def custom_preprocessing_layers(self):
+        """
+            Applies custom layers before passing the input into VGGish layers.
+            This can be used in subclasses for BatchNormalization, for example.
+        """
+        pass
+    
+    
+    def _build_vggish_base_layers(self):
+        """
+            Builds the original VGGish base layers so that weights can be loaded.
+            DO NOT RENAME LAYERS or weights will not be loaded.
+        """
+        
+        # Block 1
+        self.x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(self.audio_input)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool1')(self.x)
+
+        # Block 2
+        self.x = Conv2D(128, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv2')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool2')(self.x)
+
+        # Block 3
+        self.x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv3/conv3_1')(self.x)
+        self.x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv3/conv3_2')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool3')(self.x)
+
+        # Block 4
+        self.x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_1')(self.x)
+        self.x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_2')(self.x)
+
+        
+    def _build_vggish_top_layers(self):
+        """
+            Builds the original VGGish top layers so that weights can be loaded.
+            DO NOT RENAME LAYERS or weights will not be loaded.
+        """
+        # FC block
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool4')(self.x)
+        self.x = Flatten(name='flatten_')(self.x)
+        self.x = Dense(4096, activation='relu', name='vggish_fc1/fc1_1')(self.x)
+        self.x = Dense(4096, activation='relu', name='vggish_fc1/fc1_2')(self.x)
+        self.x = Dense(self.out_dim, activation='relu', name='vggish_fc2')(self.x)
+        
+    def custom_top_layers(self):
+        """
+            Applies custom layers after the VGGish layers.  This method needs to
+            be replaced with a customer implementation in subclasses used for
+            different classification tasks.
+        """
+        if self.pooling == 'avg':
+            self.x = GlobalAveragePooling2D()(self.x)
+        elif self.pooling == 'max':
+            self.x = GlobalMaxPooling2D()(self.x)
     
     def __init__ (self,
                   load_weights=True, 
@@ -136,32 +90,40 @@ class VGGish(object):
                   input_shape=None,
                   out_dim=None,
                   include_top=True,
-                  pooling='avg'):
+                  pooling='avg',
+                  optimizer='adam',
+                  loss='categorical_crossentropy',
+                  model_name='VGGish'):
 
         """
-        :param load_weights: if load weights
-        :param weights: loads weights pre-trained on a preliminary version of YouTube-8M.
-        :param input_tensor: input_layer
-        :param input_shape: input data shape
-        :param out_dim: output dimension
-        :param include_top:whether to include the 3 fully-connected layers at the top of the network.
-        :param pooling: pooling type over the non-top network, 'avg' or 'max'
+            Args:
+                load_weights = boolean if weights should be loaded
+                weights = weights to load ('audioset' weights are pre-trained on YouTube-8M).
+                input_tensor = Keras input_layer
+                input_shape = input data shape
+                out_dim = output dimension
+                include_top = boolean whether to include the final 3 fully-connected layers
+                pooling = pooling type over the non-top network ('avg' or 'max')
+                optimizer = string name of Keras optimizer
+                loss = string name of Keras loss function
 
-        :return: A Keras model instance.
+            Returns:
+                A compiled Keras model instance
         """
 
         # Validate parameters
         if weights not in {'audioset', None}:
-            raise ValueError('The `weights` argument should be either '
-                             '`None` (random initialization) or `audioset` '
-                             '(pre-training on audioset).')
+            raise ValueError('Only `audioset` weights are currently supported.')
 
         if out_dim is None:
             out_dim = mel_params.EMBEDDING_SIZE  # 128
-
+        self.out_dim = out_dim
+        
         if input_shape is None:
-            input_shape = (mel_params.NUM_FRAMES, mel_params.NUM_BANDS, )  # 496, 64, [batch]
-
+            input_shape = (mel_params.NUM_FRAMES, mel_params.NUM_BANDS, 1)  # 496, 64, 1
+        self.input_shape = input_shape
+            
+        # VGGish model was trained with a "batch-first" matrix format.
         if input_tensor is None:
             audio_input = Input(shape=input_shape, name='input_1')
         else:
@@ -169,67 +131,123 @@ class VGGish(object):
                 audio_input = Input(tensor=input_tensor, shape=input_shape, name='input_1')
             else:
                 audio_input = input_tensor
+        self.audio_input = audio_input
+        
+        self.pooling = pooling
 
-        # Build VGGish model
-
-        # Block 1
-        x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv1')(audio_input)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool1')(x)
-
-        # Block 2
-        x = Conv2D(128, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv2')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool2')(x)
-
-        # Block 3
-        x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv3/conv3_1')(x)
-        x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv3/conv3_2')(x)
-        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool3')(x)
-
-        # Block 4
-        x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_1')(x)
-        x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu', padding='same', name='conv4/conv4_2')(x)
-
+        # Build model.  Subclasses should implement the custom_top_layers() method
+        # and optionally, the custom_preprocessing_layers() method.
+        self.custom_preprocessing_layers()
+        
+        self._build_vggish_base_layers()
+        
         if include_top:
-            # FC block
-            x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='pool4')(x)
-            x = Flatten(name='flatten_')(x)
-            x = Dense(4096, activation='relu', name='vggish_fc1/fc1_1')(x)
-            x = Dense(4096, activation='relu', name='vggish_fc1/fc1_2')(x)
-            x = Dense(out_dim, activation='relu', name='vggish_fc2')(x)
+            self._build_vggish_top_layers()
         else:
-            if pooling == 'avg':
-                x = GlobalAveragePooling2D()(x)
-            elif pooling == 'max':
-                x = GlobalMaxPooling2D()(x)
-
+            self.custom_top_layers()
 
         if input_tensor is not None:
-            inputs = get_source_inputs(input_tensor)
+            self.inputs = get_source_inputs(input_tensor)
         else:
-            inputs = audio_input
+            self.inputs = audio_input
 
         # Instantiate model
-        self.model = Model(inputs, x, name='VGGish')
+        self.model = Model(inputs=self.inputs, outputs=self.x, name=model_name)
 
         # load weights
         if load_weights:
             if weights == 'audioset':
                 if include_top:
                     print(f'Weights will be loaded from {orca_params.WEIGHTS_PATH_TOP}')
-                    self.model.load_weights(orca_params.WEIGHTS_PATH_TOP)
+                    self.model.load_weights(orca_params.WEIGHTS_PATH_TOP, by_name=True)
                 else:
                     print(f'Weights will be loaded from {orca_params.WEIGHTS_PATH}')
-                    self.model.load_weights(orca_params.WEIGHTS_PATH)
+                    self.model.load_weights(orca_params.WEIGHTS_PATH, by_name=True)
             else:
                 raise Exception("ERROR: failed to load weights")
         
         # print representation of the model
         self.model.summary()
 
+        # Build and compile the model
+        self.model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+        print(f'Compiled {model_name} model with {optimizer} optimizer and {loss} loss.')
+
     def get_model(self):
-        
+        """ Returns a compiled Keras model."""
         return self.model
     
+    
+class OrcaVGGish(VGGish):    
+    """
+    A subclass that adapts the VGGish architecture for our audio classification model.
+    This model is never trained if weights aren't provided!
+    """
+        
+    def custom_preprocessing_layers(self):
+        """
+            TODO: implement BatchNormalization of inputs
+        """
+        pass
+    
+    
+    def custom_top_layers(self):
+        """
+            Top layers for OrcaDetector classification.
+        """
+        
+        # FC block
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='orca_pool4')(self.x)
+        self.x = Flatten(name='orca_flatten_')(self.x)
+        self.x = Dense(4096, activation='relu', name='orca_fc1/orca_fc1_1')(self.x)
+        self.x = Dense(4096, activation='relu', name='orca_fc1/orca_fc1_2')(self.x)
+        self.x = Dense(self.out_dim, activation='softmax', name='orca_softmax')(self.x)
+        
+        
+    def __init__ (self,
+                  load_weights=True, 
+                  weights='audioset', 
+                  input_tensor=None,
+                  input_shape=None,
+                  out_dim=None,
+                  pooling='avg',
+                  optimizer=orca_params.OPTIMIZER,
+                  loss=orca_params.LOSS,
+                  model_name='OrcaVGGish'):
+        
+        """
+            Args:
+                load_weights = boolean if weights should be loaded
+                weights = weights to load ('audioset' weights are pre-trained on YouTube-8M).
+                input_tensor = Keras input_layer
+                input_shape = input data shape
+                out_dim = output dimension
+                pooling = pooling type over the non-top network ('avg' or 'max')
+                optimizer = string name of Keras optimizer
+                loss = string name of Keras loss function
+
+            Returns:
+                A compiled Keras model instance
+        """
+        
+        # Because we don't want to use VGGish for its original classification task,
+        # we will always pass include_top=False to omit those layers.
+        super().__init__(load_weights=load_weights, 
+                         weights=weights, 
+                         input_tensor=input_tensor, 
+                         input_shape=input_shape,
+                         out_dim=out_dim, 
+                         include_top=False, 
+                         pooling=pooling,
+                         optimizer=optimizer, 
+                         loss=loss, 
+                         model_name=model_name)
+
+    def get_model(self):
+        """ Returns a compiled Keras model."""
+        return self.model
+
+        
 if __name__ == '__main__':
 
     """
@@ -241,12 +259,13 @@ if __name__ == '__main__':
                              include_top=False, 
                              pooling='avg').get_model()
 
-    print('Loading OrcaVGGish model:')
+    print('\nLoading OrcaVGGish model:')
     sound_extractor = OrcaVGGish(load_weights=True, 
                                  weights='audioset',
                                  pooling='avg').get_model()
 
     # debugging output to verify that trained weights were loaded
+    print('\nSample weights (max prior to orca_* layers should be non-zero).')
     layers = sound_extractor.layers
     for l in layers:
         print(f'layer={l.name}')
@@ -255,3 +274,5 @@ if __name__ == '__main__':
             print(f'  weights max={np.max(w)}\n')
         
     print('Done!')
+    
+    
