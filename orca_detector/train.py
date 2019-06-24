@@ -6,6 +6,13 @@ Main file to train a model for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
+from vggish_model import OrcaVGGish
+from orca_utils import plot_train_metrics, save_model
+from orca_params import DatasetType
+from generator import WavDataGenerator
+from database_parser import load_dataset
+import orca_params
+import database_parser
 import h5py
 import os
 import tensorflow as tf
@@ -16,37 +23,31 @@ from keras.models import Sequential
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # project-specific imports
-import database_parser
-import orca_params
-from database_parser import load_dataset
-from generator import WavDataGenerator
-from orca_params import DatasetType
-from orca_utils import plot_train_metrics, save_model
-from vggish_model import OrcaVGGish
 
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
-def print_framework_versions():
-    print(f'TensorFlow version: {tf.VERSION}')
-    print(f'Keras version: {tf.keras.__version__}')
 
 def create_network():
     """ Instantiate but don't yet fit the model."""
 
-    sound_extractor = OrcaVGGish(load_weights=True, 
+    sound_extractor = OrcaVGGish(load_weights=True,
                                  weights='audioset',
                                  pooling='avg').get_model()
 
     return sound_extractor
 
+
 def run(**params):
 
-    print_framework_versions()
-    
+    print(f'TensorFlow version: {tf.VERSION}')
+    print(f'Keras version: {tf.keras.__version__}')
+
     # load the dataset mappings from disk.
-    train_files, train_labels = load_dataset(orca_params.DATA_PATH, DatasetType.TRAIN)
-    validate_files, validate_labels = load_dataset(orca_params.DATA_PATH, DatasetType.VALIDATE)
-    
+    train_files, train_labels = load_dataset(
+        orca_params.DATA_PATH, DatasetType.TRAIN)
+    validate_files, validate_labels = load_dataset(
+        orca_params.DATA_PATH, DatasetType.VALIDATE)
+
     training_generator = WavDataGenerator(train_files,
                                           train_labels,
                                           shuffle=True,
