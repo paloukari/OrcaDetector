@@ -24,7 +24,15 @@ ibmcloud sl security sshkey-list
 Provision a V100 using this key id
 
 ```
-ibmcloud sl vs create --datacenter=lon04 --hostname=v100a --domain=your.domain.com --image=2263543 --billing=hourly --network 1000 --key={YOUR_KEY_ID} --flavor AC2_8X60X100 --san
+ibmcloud sl vs create \
+    --datacenter=lon04 \
+    --hostname=v100a \
+    --domain=your.domain.com \
+    --image=2263543 \
+    --billing=hourly \
+    --network 1000 \
+    --key={YOUR_KEY_ID} \
+    --flavor AC2_8X60X100 --san
 ```
 
 
@@ -79,7 +87,11 @@ cd ~/OrcaDetector/orca_detector
 Build the Docker image (this will take a while):
 
 ```
-sudo docker build -t orca_dev -f Dockerfile.dev --build-arg AWS_ID={YOUR_AWS_ID} --build-arg AWS_SECRET={YOUR_AWS_SECRET} .
+sudo docker build \
+    -t orca_dev \
+    -f Dockerfile.dev \
+    --build-arg AWS_ID={YOUR_AWS_ID} \
+    --build-arg AWS_SECRET={YOUR_AWS_SECRET} .
 ```
 
 ## 4. Launch an `orca_dev` Docker container
