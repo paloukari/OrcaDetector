@@ -44,6 +44,8 @@ Once there, allow TCP inbound on 32001 to use for exposing the dev container
 ufw allow 32001/tcp
 ```
 
+>Note:You'll need to check-in your public SSH key in the keys folder and modify the last layer of the dockerfile to get access to the container from VsCode
+
 ## 1. Set up required environment variables - UPDATE
 
 Set the environment variable for MLFlow in your system's `~/.bashrc` file (or on a Mac, in your `~/.bash_profile` file):
@@ -64,35 +66,7 @@ cd ~
 git clone https://github.com/paloukari/OrcaDetector
 ```
 
-## 3. Download data files and model weights
-
-First, if you don't already have the AWS CLI installed, follow the instructions [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
-
-### Marine mammal audio samples
-
-We have downloaded the audio files from the [Watkins Marine Mammal Sound Database](https://cis.whoi.edu/science/B/whalesounds/fullCuts.cfm) using the [/orca_detector/getData.py](./orca_detector/getData.py) script, based on a sample provided to us by Watkins.
-
-Expand `data.tar.gz` inside the main directory of the repo; it will create a `/data` folder.  (There are `.gitignore` rules in place to prevent it from accidentally being submitted to GitHub.)
-
-```
-cd ~/OrcaDetector
-aws s3 cp s3://w251-orca-detector-data/data.tar.gz .
-tar -xvf data.tar.gz
-```
-
-Alternately you can download [data.zip](https://drive.google.com/file/d/10mGIptby8SEf4yk0m57mVtiXCgRQrgTc/view?usp=sharing) from Google Drive, but due to the size of the archive, it's probably much faster to pull it from the S3 bucket.
-
-### Pretrained weights (for VGGish Keras model)
-
-Download and extract `vggish_weights.tar.gz ` inside the main directory of the repo; it will create a `/vggish_weights` folder containing VGGish model weights that were pretrained on the [AudioSet](https://research.google.com/audioset/index.html) dataset, which contains audio from 2 million human-labeled 10-second YouTube clips.
-
-```
-cd ~/OrcaDetector
-aws s3 cp s3://w251-orca-detector-data/vggish_weights.tar.gz .
-tar -xvf vggish_weights.tar.gz
-```
-
-## 4. Create the `orca_dev` Docker image
+## 3. Create the `orca_dev` Docker image
 
 ### GPU OPTION: Build our `orca_dev` base Docker image
 
@@ -105,10 +79,10 @@ cd ~/OrcaDetector/orca_detector
 Build the Docker image (this will take a while):
 
 ```
-sudo docker build -t orca_dev -f Dockerfile.dev .
+sudo docker build -t orca_dev -f Dockerfile.dev --build-arg AWS_ID={YOUR_AWS_ID} --build-arg AWS_SECRET={YOUR_AWS_SECRET} .
 ```
 
-## 5. Launch an `orca_dev` Docker container
+## 4. Launch an `orca_dev` Docker container
 
 Run the `orca_dev` Docker container with the following args.  
 
@@ -121,9 +95,6 @@ sudo docker run \
     --name orca_dev \
     -ti \
     -e JUPYTER_ENABLE_LAB=yes \
-    -v ~/OrcaDetector/orca_detector:/src \
-    -v ~/OrcaDetector/data:/data \
-    -v ~/OrcaDetector/vggish_weights:/weights \
     -v ~/OrcaDetector/results:/results \
     -p 8888:8888 \
     -p 4040:4040 \
@@ -180,7 +151,7 @@ Then go to your browser and enter:
 http://127.0.0.1:8888?token=<whatever token got displayed in the logs>
 ```
 
-## 6. (OPTIONAL) Setup the container for remote debugging
+## 5. (Alternative) Manually setup the container for remote debugging
 
 We need to setup the container to allow the same SSH public key. The entire section could be automated in the dockerfile. We can add our public keys in the repo and pre-authorize us at docker build.
 
@@ -252,7 +223,7 @@ Hit F1 and select Remote-SSH:Connect to Host
 Once in there, open the OrcaDetector folder, install the Python extension on the container (from the Vs Code extensions), select the python interpreter and start debugging.
 
 
-## 7. Train the OrcaDetector
+## 6. Train the OrcaDetector
 
 ### Training
 
