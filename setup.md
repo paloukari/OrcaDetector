@@ -194,7 +194,7 @@ ssh-keygen -t rsa -b 4096
 
 The key will be created here: %USERPROFILE%\.ssh
 
-Set the root password. We need this to copy the dev ssh pub key.
+Inside the container, set the root password. We need this to copy the dev ssh pub key.
 ```
 passwd root
 ```
@@ -207,7 +207,7 @@ Configure password login
 ```
 vim /etc/ssh/sshd_config
 ```
-Change these lines:
+Change these lines of /etc/ssh/sshd_config:
 ```
 PasswordAuthentication yes
 PermitRootLogin yes
@@ -218,7 +218,11 @@ service ssh start
 ```
 
 Now, you should be able to login from your dev environment using the password.
-To add the ssh pub key, on the dev environment run:
+```
+ssh root@{SERVER_IP} -p 32001
+```
+
+To add the ssh pub key in the container, from the dev environment run:
 
 ```
 SET REMOTEHOST=root@{SERVER_IP}:32001
