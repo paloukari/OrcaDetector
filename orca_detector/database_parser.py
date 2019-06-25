@@ -112,7 +112,7 @@ def _save_indices(flattened_file, data_path=orca_params.DATA_PATH, dataset_type=
         print('Saved dataset indices (metadata) to {}'.format(indices_file))
 
 
-def _quantize_sample(label, file, sample_len=orca_params.FILE_MAX_SIZE_SECONDS):
+def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECONDS):
     """
         Splits up a given file into non-overlapping segments of the specified length.
         Returns a list containing (label, 'file:start:frames') of each segment.
