@@ -138,6 +138,9 @@ def _quantize_sample(label, file, sample_len=orca_params.FILE_MAX_SIZE_SECONDS):
 
             # truncate final sample which will be shorter than min required for a spectrogram
             del sample_list[-1]
+            # add it back in with some overlap
+            sample_list.append([label,'{}:{}:{}'.format(
+                file, int(wav_file.frames - min_frames), min_frames)])
             return sample_list
         else:
             return []

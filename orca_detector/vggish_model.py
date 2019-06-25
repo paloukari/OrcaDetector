@@ -9,6 +9,7 @@ Adapted from https://github.com/DTaoo/VGGish
 """
 
 import numpy as np
+import os
 import sys
 
 from keras.models import Model
