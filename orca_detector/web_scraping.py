@@ -25,7 +25,7 @@ def downloadSample(samplename, filename):
 
     if not os.path.exists(filename):
         urllib.request.urlretrieve(
-            'http://cis.whoi.edu/' + samplename, filename )
+            'http://cis.whoi.edu/' + samplename, filename)
 
 
 def downloadTable(url, name, year):
@@ -50,7 +50,7 @@ def downloadTable(url, name, year):
         samplename_parts = col[0]['href'].split('/')
 
         dir = 'data/' + name + '/' + year
-        filename=dir + '/' + samplename_parts[-1:][0]
+        filename = dir + '/' + samplename_parts[-1:][0]
 
         if not os.path.exists(dir):
             os.makedirs(dir)
@@ -62,6 +62,7 @@ def downloadTable(url, name, year):
         delayed(downloadSample)(data[0], data[1]) for data in downloadData)
 
     print('->')
+
 
 def downloadAllAnimals(url):
     r = requests.get(url)

@@ -20,6 +20,7 @@ import mel_params
 import orca_params
 from mel_features import frame, log_mel_spectrogram
 
+
 def _waveform_to_mel_spectrogram_segments(data, sample_rate):
     """
     Converts audio from a single wav file into an array of examples for VGGish.
@@ -40,13 +41,13 @@ def _waveform_to_mel_spectrogram_segments(data, sample_rate):
     IMPORTANT: if data.shape < (80000, ) then log_mel_examples.shape=(0, 496, 64).
         The zero is problematic downstream, so code will have to check for that.
     """
-    
+
     # Convert to mono if necessary.
     if len(data.shape) > 1:
         print(f'DEBUG: audio channels before={data.shape}')
         data = np.mean(data, axis=1)
         print(f'DEBUG: audio channels after={data.shape}')
-        
+
     # Resample to the rate assumed by VGGish.
     if sample_rate != mel_params.SAMPLE_RATE:
         data = resampy.resample(data, sample_rate, mel_params.SAMPLE_RATE)
@@ -59,19 +60,21 @@ def _waveform_to_mel_spectrogram_segments(data, sample_rate):
                                   hop_length_secs=mel_params.STFT_HOP_LENGTH_SECONDS,
                                   num_mel_bins=mel_params.NUM_MEL_BINS,
                                   lower_edge_hertz=mel_params.MEL_MIN_HZ,
-                                  upper_edge_hertz=mel_params.MEL_MAX_HZ )
+                                  upper_edge_hertz=mel_params.MEL_MAX_HZ)
 
     # Frame features into examples.
-    features_sample_rate  = 1.0 / mel_params.STFT_HOP_LENGTH_SECONDS
-    example_window_length = int(round(mel_params.EXAMPLE_WINDOW_SECONDS * features_sample_rate))
-    example_hop_length    = int(round(mel_params.EXAMPLE_HOP_SECONDS * features_sample_rate))
-    
+    features_sample_rate = 1.0 / mel_params.STFT_HOP_LENGTH_SECONDS
+    example_window_length = int(
+        round(mel_params.EXAMPLE_WINDOW_SECONDS * features_sample_rate))
+    example_hop_length = int(
+        round(mel_params.EXAMPLE_HOP_SECONDS * features_sample_rate))
+
     # If log_mel.shape[0] < mel_params.NUM_FRAMES, log_mel_examples will return
     #   an array with log_mel_examples.shape[0] = 0
     log_mel_examples = frame(log_mel,
                              window_length=example_window_length,
                              hop_length=example_hop_length)
-    
+
     # print(f'DEBUG: data.shape={data.shape}')
     # print(f'DEBUG: log_mel_examples.shape={log_mel_examples.shape}')
     if log_mel_examples.shape[0] == 0:
@@ -86,7 +89,7 @@ class WavDataGenerator(keras.utils.Sequence):
 
     def __init__(self, files, labels, shuffle=True):
         """Initialization"""
-        
+
         self.files = files
         self.labels = labels  # one-hot encoded
         self.num_classes = labels.shape[1]
@@ -103,7 +106,7 @@ class WavDataGenerator(keras.utils.Sequence):
     def __getitem__(self, index):
         """
         Generate one batch of data
-        
+
         Args:
             index = batch number being requested
         Returns:
@@ -112,7 +115,7 @@ class WavDataGenerator(keras.utils.Sequence):
         """
 
         # Generate indexes of the batch
-        batch_indices = self.indices[index * self.batch_size: \
+        batch_indices = self.indices[index * self.batch_size:
                                      (index + 1) * self.batch_size]
 
         # Store labels in a numpy array (batch_size, num_classes)
@@ -121,9 +124,9 @@ class WavDataGenerator(keras.utils.Sequence):
             batch_labels[batch_i] = self.labels[i]
 
         # Find list of IDs and pass in for feature extraction
-        batch_files  = [self.files[k] for k in batch_indices]
+        batch_files = [self.files[k] for k in batch_indices]
         X = self.__extract_features(batch_files)
-        
+
         # Deal with missing data in the X array
         X, batch_labels = self.__treat_missing_data(X, batch_labels)
         return X, batch_labels
@@ -141,33 +144,35 @@ class WavDataGenerator(keras.utils.Sequence):
             from the original Keras VGGish implementation, each item in the
             batch_files list here represents a segment of a wave file, so
             they don't need to be further sub-divided.
-            
+
             Return format is based on pretrained Keras VGGish model input shape.
-            
+
             Returns X : np.array (num_samples, num_frames, num_bands, 1)
-            
+
             IMPORTANT: if any samples were too small to be processed, there
             will be rows in the returned X array which are filled with zeros.
         """
-        
+
         num_files = len(batch_files)
-        X = np.zeros((num_files, mel_params.NUM_FRAMES, mel_params.NUM_BANDS, 1))
-        
+        X = np.zeros((num_files, mel_params.NUM_FRAMES,
+                      mel_params.NUM_BANDS, 1))
+
         # Generate data from the appropriate segment of the audio file
         for i, file in enumerate(batch_files):
-            data, sample_rate = sf.read(file.split(':')[0], 
-                                        start = int(file.split(':')[1]), 
-                                        frames = int(file.split(':')[2]))
+            data, sample_rate = sf.read(file.split(':')[0],
+                                        start=int(file.split(':')[1]),
+                                        frames=int(file.split(':')[2]))
             # Transform to log mel spectrogram format and store sample
-            spectrogram = _waveform_to_mel_spectrogram_segments(data, sample_rate)
+            spectrogram = _waveform_to_mel_spectrogram_segments(
+                data, sample_rate)
             spectrogram = np.expand_dims(spectrogram, 3)
-            
+
             # anticipate case where sound sample was too small to create the spectrogram
             if spectrogram.shape[0] > 0:
                 X[i, :, :, :] = spectrogram
 
         return X
-    
+
     def __treat_missing_data(self, X, batch_files):
         """
             Check for rows in X that contain all zeros (indicating audio sample

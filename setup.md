@@ -9,6 +9,41 @@ This UC Berkeley Master of Information in Data Science capstone project was deve
 
 If using AWS, as assumed by these setup instructions, provision an Ubuntu 18.04 `p2.xlarge` instance.  It's got older GPUs (Tesla K80) but is much cheaper.  Make sure to upgrade the storage space (e.g. 500 GB).  Also, make sure to pick a prebuilt Deep Learning AMI during the first step of the provisioning process. The most current version as of writing is `Deep Learning AMI (Ubuntu) Version 23.0 - ami-058f26d848e91a4e8`. This will already have `docker` and `nvidia-docker` pre-installed and will save you a lot of manual installation "fun".
 
+### Using IBM Cloud
+
+Provision a server to run the training code. You can you this server as your development environment too.
+
+Install the CLI, add your ssh public key, and get the key id
+```
+curl -fsSL https://clis.ng.bluemix.net/install/linux | sh
+ibmcloud login
+ibmcloud sl security sshkey-add LapKey --in-file ~/.ssh/id_rsa.pub
+ibmcloud sl security sshkey-list
+```
+
+Provision a V100 using this key id
+
+```
+ibmcloud sl vs create --datacenter=lon04 --hostname=v100a --domain=your.domain.com --image=2263543 --billing=hourly --network 1000 --key={YOUR_KEY_ID} --flavor AC2_8X60X100 --san
+```
+
+
+Wait for the provisioning completion 
+```
+watch ibmcloud sl vs list
+```
+
+SSH on this host to setup the container.
+
+```
+ssh -i ~/.ssh/id_rsa {SERVER_IP}
+```
+
+Once there, allow TCP inbound on 32001 to use for exposing the dev container
+```
+ufw allow 32001/tcp
+```
+
 ## 1. Set up required environment variables - UPDATE
 
 Set the environment variable for MLFlow in your system's `~/.bashrc` file (or on a Mac, in your `~/.bash_profile` file):
@@ -92,6 +127,7 @@ sudo docker run \
     -v ~/OrcaDetector/results:/results \
     -p 8888:8888 \
     -p 4040:4040 \
+    -p 32001:22 \
     orca_dev
 ```
 
@@ -144,8 +180,75 @@ Then go to your browser and enter:
 http://127.0.0.1:8888?token=<whatever token got displayed in the logs>
 ```
 
+## 6. (OPTIONAL) Setup the container for remote debugging
 
-## 6. Train the OrcaDetector
+We need to setup the container to allow the same SSH public key. The entire section could be automated in the dockerfile. We can add our public keys in the repo and pre-authorize us at docker build.
+
+To create a new key in Windows, run:
+
+Powershell: 
+```
+Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+ssh-keygen -t rsa -b 4096 
+```
+
+The key will be created here: %USERPROFILE%\.ssh
+
+Set the root password. We need this to copy the dev ssh pub key.
+```
+passwd root
+```
+Install SSH server
+```
+apt-get install openssh-server
+systemctl enable ssh
+```
+Configure password login
+```
+vim /etc/ssh/sshd_config
+```
+Change these lines:
+```
+PasswordAuthentication yes
+PermitRootLogin yes
+```
+Start the service
+```
+service ssh start
+```
+
+Now, you should be able to login from your dev environment using the password.
+To add the ssh pub key, on the dev environment run:
+
+```
+SET REMOTEHOST=root@{SERVER_IP}:32001
+scp %USERPROFILE%\.ssh\id_rsa.pub %REMOTEHOST%:~/tmp.pub
+ssh %REMOTEHOST% "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat /tmp/tmp.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm -f /tmp/tmp.pub"
+```
+
+Test it works:
+```
+ssh -i ~/.ssh/id_rsa {SERVER_IP} -p 32001
+```
+
+Now, you can remove the password root access if you want.
+
+In VsCode, install the Remote SSH extension.
+Hit F1 and run VsCode SSH Config and enter 
+
+```
+Host V100
+    User root
+    HostName {SERVER_IP}
+    Port 32001
+    IdentityFile ~/.ssh/id_rsa
+```
+Hit F1 and select Remote-SSH:Connect to Host
+
+Once in there, open the OrcaDetector folder, install the Python extension on the container (from the Vs Code extensions), select the python interpreter and start debugging.
+
+
+## 7. Train the OrcaDetector
 
 ### Training
 
