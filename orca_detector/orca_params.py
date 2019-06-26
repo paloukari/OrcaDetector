@@ -16,6 +16,7 @@ class DatasetType(IntEnum):
 
 # Paths to key volumes mapped into the Docker container
 DATA_PATH = '/data/'
+HDF5_FILENAME = 'features_dataset.hdf5'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
@@ -41,4 +42,4 @@ BATCH_SIZE = 32
 # take some debugging to work with shorter samples, but it may be worthwhile since
 # our dataset has quite a few samples < 5 sec.
 FILE_MAX_SIZE_SECONDS = 10.00
-FILE_SAMPLING_SIZE_SECONDS = 1.0
+FILE_SAMPLING_SIZE_SECONDS = 0.98

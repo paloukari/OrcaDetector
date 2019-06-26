@@ -6,15 +6,20 @@ File to parse and label datafiles for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
+import h5py
 import numpy as np
+import mel_params
+import orca_params
 import os
 import pickle
 import pprint
 import random
 import re
+import resampy
 import soundfile as sf
 
 from collections import defaultdict
+from mel_features import frame, log_mel_spectrogram
 from sklearn.preprocessing import LabelEncoder
 
 # project-specific imports
@@ -139,7 +144,7 @@ def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECO
             # truncate final sample which will be shorter than min required for a spectrogram
             del sample_list[-1]
             # add it back in with some overlap
-            sample_list.append([label,'{}:{}:{}'.format(
+            sample_list.append([label, '{}:{}:{}'.format(
                 file, int(wav_file.frames - min_frames), min_frames)])
             return sample_list
         else:
@@ -230,6 +235,132 @@ def _onehot(labels, desired_classes=orca_params.CLASSES, data_path=orca_params.D
     return onehot_encoded_labels
 
 
+def _waveform_to_mel_spectrogram_segments(data, sample_rate):
+    """
+    Converts audio from a single wav file into an array of examples for VGGish.
+
+    Args:
+        data: np.array of either one dimension (mono) or two dimensions
+          (multi-channel, with the outer dimension representing channels).
+          Each sample is generally expected to lie in the range [-1.0, +1.0],
+          although this is not required. Shape is (num_frame, )
+        sample_rate: Sample rate of data.
+
+    Returns:
+        3-D np.array of shape [num_examples, num_frames, num_bands] which represents
+        a sequence of examples, each of which contains a patch of log mel
+        spectrogram, covering num_frames frames of audio and num_bands mel frequency
+        bands, where the frame length is mel_params.STFT_HOP_LENGTH_SECONDS.
+
+    IMPORTANT: if data.shape < (80000, ) then log_mel_examples.shape=(0, 496, 64).
+        The zero is problematic downstream, so code will have to check for that.
+    """
+
+    # Convert to mono if necessary.
+    if len(data.shape) > 1:
+        print(f'DEBUG: audio channels before={data.shape}')
+        data = np.mean(data, axis=1)
+        print(f'DEBUG: audio channels after={data.shape}')
+
+    # Resample to the rate assumed by VGGish.
+    if sample_rate != mel_params.SAMPLE_RATE:
+        data = resampy.resample(data, sample_rate, mel_params.SAMPLE_RATE)
+
+    # Compute log mel spectrogram features.
+    log_mel = log_mel_spectrogram(data,
+                                  audio_sample_rate=mel_params.SAMPLE_RATE,
+                                  log_offset=mel_params.LOG_OFFSET,
+                                  window_length_secs=mel_params.STFT_WINDOW_LENGTH_SECONDS,
+                                  hop_length_secs=mel_params.STFT_HOP_LENGTH_SECONDS,
+                                  num_mel_bins=mel_params.NUM_MEL_BINS,
+                                  lower_edge_hertz=mel_params.MEL_MIN_HZ,
+                                  upper_edge_hertz=mel_params.MEL_MAX_HZ)
+
+    # Frame features into examples.
+    features_sample_rate = 1.0 / mel_params.STFT_HOP_LENGTH_SECONDS
+    example_window_length = int(
+        round(mel_params.EXAMPLE_WINDOW_SECONDS * features_sample_rate))
+    example_hop_length = int(
+        round(mel_params.EXAMPLE_HOP_SECONDS * features_sample_rate))
+
+    # If log_mel.shape[0] < mel_params.NUM_FRAMES, log_mel_examples will return
+    #   an array with log_mel_examples.shape[0] = 0
+    log_mel_examples = frame(log_mel,
+                             window_length=example_window_length,
+                             hop_length=example_hop_length)
+
+    # print(f'DEBUG: data.shape={data.shape}')
+    # print(f'DEBUG: log_mel_examples.shape={log_mel_examples.shape}')
+    if log_mel_examples.shape[0] == 0:
+        print('\nWARNING: audio sample too short! Using all zeros for that example.\n')
+    return log_mel_examples
+
+
+def _extract_segment_features(segment):
+    """
+        Generates the features for the given audio sample segment.
+
+        Return format is based on pretrained Keras VGGish model input shape.
+
+        Returns X : np.array (num_samples, num_frames, num_bands, 1)
+    """
+
+    X = np.zeros((1, mel_params.NUM_FRAMES,
+                  mel_params.NUM_BANDS, 1))
+
+    # Generate data from the appropriate segment of the audio file
+    data, sample_rate = sf.read(segment.split(':')[0],
+                                start=int(segment.split(':')[1]),
+                                frames=int(segment.split(':')[2]))
+    # Transform to log mel spectrogram format and store sample
+    spectrogram = _waveform_to_mel_spectrogram_segments(
+        data, sample_rate)
+    spectrogram = np.expand_dims(spectrogram, 3)
+
+    # anticipate case where sound sample was too small to create the spectrogram
+    if spectrogram.shape[0] > 0:
+        X[0, :, :, :] = spectrogram
+
+    return X
+
+
+def _extract_and_save_features(dataset,
+                               data_path,
+                               dataset_type=None,
+                               backup=True):
+    """
+        Extracts the features (melspectrogram) of the flattened dataset 
+        and saves extracted features in the specified HDF5 file
+    """
+
+    # with h5py.File(hdf5_data_path, 'w') as hf:
+    # check if the dataset_type is valid
+    if dataset_type not in [item.value for item in DatasetType]:
+        raise ValueError('ERROR: invalid DatasetType specified.')
+    print('Extracting features from {} segments for {} dataset.'.format(
+        (len(dataset)), (dataset_type.name)))
+
+    filename = os.path.join(data_path, dataset_type.name+'.features')
+    if os.path.exists(filename):
+        os.remove(filename)
+    data = []
+    for index, segment in enumerate(dataset):
+        if index % 100 == 0:
+            print(f'{100*index/len(dataset):.3f}%')
+        features = _extract_segment_features(segment[1])
+        data.append([segment[0], features])
+
+    with open(filename, 'wb') as fp:
+        pickle.dump(data, fp)
+
+        # hf.create_dataset(dataset_type.name+'_DATA', data=data,
+        #                   compression="gzip", compression_opts=9)
+        # hf.create_dataset(dataset_type.name+'_LABELS', data=labels,
+        #                   compression="gzip", compression_opts=9)
+        # hf.close()
+    print(f'Saved features of dataset {dataset_type.name}')
+
+
 def train_val_test_split(data_path=orca_params.DATA_PATH,
                          train_percentage=.70,
                          validate_percentage=0.20):
@@ -238,9 +369,6 @@ def train_val_test_split(data_path=orca_params.DATA_PATH,
         encoding is *not* done at this point, nor are undesired classes converted
         to "Other".  That is done when loading the dataset.
     """
-
-    # TODO: change train/val/test split to happen *after* quantization
-
     all_samples = _label_files(data_path=orca_params.DATA_PATH)
 
     datasets = {DatasetType.TRAIN: defaultdict(list),
@@ -261,14 +389,12 @@ def train_val_test_split(data_path=orca_params.DATA_PATH,
         datasets[DatasetType.TEST][label] = \
             files[num_train_files + num_validate_files:]
 
-#     for key, val in datasets.items():
-#         for l in val:
-#             print('DEBUG: key={}, label={}, num entries={}'.format(key.name, l, len(datasets[key][l])))
-
     # quantize and flatten each dataset
     for dataset_type, contents in datasets.items():
         flattened_dataset = _flatten_and_quantize_dataset(contents)
-        _save_indices(flattened_dataset, data_path, dataset_type, backup=True)
+        _extract_and_save_features(flattened_dataset,
+                                   data_path,
+                                   dataset_type)
 
 
 def load_dataset(data_path=orca_params.DATA_PATH, dataset_type=None):
