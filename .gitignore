@@ -10,6 +10,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+.vscode/
+
 
 # C extensions
 *.so
@@ -108,3 +110,4 @@ ENV/
 
 # mypy
 .mypy_cache/
+

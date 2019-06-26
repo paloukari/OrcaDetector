@@ -42,34 +42,28 @@ def run(**params):
     print(f'TensorFlow version: {tf.VERSION}')
     print(f'Keras version: {tf.keras.__version__}')
 
-    # load the dataset mappings from disk.
-    train_files, train_labels = load_dataset(
+    # load the dataset features from disk.
+    train_features, train_labels = load_dataset(
         orca_params.DATA_PATH, DatasetType.TRAIN)
-    validate_files, validate_labels = load_dataset(
+    validate_features, validate_labels = load_dataset(
         orca_params.DATA_PATH, DatasetType.VALIDATE)
 
-    training_generator = WavDataGenerator(train_files,
-                                          train_labels,
-                                          shuffle=True,
-                                          **params)
-
-    # test the generator
-    training_generator.__getitem__(0)
-
-    validation_generator = WavDataGenerator(validate_files,
-                                            validate_labels,
-                                            shuffle=True,
-                                            **params)
+    # shuffle, one hot and filter labels
+    classes = set([set(train_labels), set(validate_labels)])
+    encoder = create_label_encoding(classes)
+    train_labels = encode_labels(train_labels, encoder)
+    validate_labels = encode_labels(validate_labels, encoder)
 
     model = create_network()
 
-    history = model.fit_generator(generator=training_generator,
-                                  validation_data=validation_generator,
-                                  class_weight=orca_params.CLASS_WEIGHTS,
-                                  epochs=orca_params.EPOCHS,
-                                  use_multiprocessing=True,
-                                  verbose=1,
-                                  workers=1)
+    history = model.fit(train_features,
+                        train_labels,
+                        validation_data=validation_generator,
+                        class_weight=orca_params.CLASS_WEIGHTS,
+                        epochs=orca_params.EPOCHS,
+                        use_multiprocessing=True,
+                        verbose=1,
+                        workers=1)
 
     # save loss and accuracy plots to disk
     loss_fig_path, acc_fig_path = plot_train_metrics(history, RUN_TIMESTAMP)

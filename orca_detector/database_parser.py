@@ -6,7 +6,6 @@ File to parse and label datafiles for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
-import h5py
 import numpy as np
 import mel_params
 import orca_params
@@ -85,38 +84,6 @@ def _backup_datafile(file_path, suffix='-old'):
         print('Renamed {} to {}'.format(file_path, renamed_file))
 
 
-def _save_indices(flattened_file, data_path=orca_params.DATA_PATH, dataset_type=None, backup=True):
-    """
-        Saves file of indices for a specific dataset (train/val/test) to disk.
-
-        ARGS:
-            flattened_file = path of file to be saved
-            dataset_type = one of DatasetType enum
-            backup = boolean whether to backup (vs. overwrite)
-
-        RETURNS:
-            nothing
-    """
-
-    # validate dataset_type is valid
-    if dataset_type not in [item.value for item in DatasetType]:
-        raise ValueError('ERROR: invalid DatasetType specified.')
-    if dataset_type == DatasetType.TRAIN:
-        indices_file = os.path.join(data_path, 'train_map.p')
-    elif dataset_type == DatasetType.VALIDATE:
-        indices_file = os.path.join(data_path, 'validate_map.p')
-    elif dataset_type == DatasetType.TEST:
-        indices_file = os.path.join(data_path, 'test_map.p')
-
-    # rename old files instead of overwriting.
-    if backup:
-        _backup_datafile(indices_file)
-
-    with open(indices_file, 'wb') as fp:
-        pickle.dump(flattened_file, fp)
-        print('Saved dataset indices (metadata) to {}'.format(indices_file))
-
-
 def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECONDS):
     """
         Splits up a given file into non-overlapping segments of the specified length.
@@ -190,29 +157,20 @@ def _flatten_and_quantize_dataset(dataset):
     return dataset_quantized
 
 
-def _onehot(labels, desired_classes=orca_params.CLASSES, data_path=orca_params.DATA_PATH):
+def encode_labels(labels, encoder):
     """
         One-hot encodes labels in preparation for passing to a Keras model.
 
-        All classes that aren't in orca_params.CLASSES are mapped to 'Other'.
-
         ARGS:
             labels = list of all observed label names (may be a tuple)
-            data_path = path to directory where the indices files are found
+            encoder = the fitted LabelEncoder to use
 
         RETURNS:
             np.array[observations, classes] representing the labels
     """
 
-    # TODO: rework the OHE logic so that it doesn't happen at runtime in the generator.
-
     # convert to lists (zip generates tuples)
     labels = list(labels)
-
-    # with label encoder, map all undesired classes to "Other"
-    ohe_classes = desired_classes + ['Other']
-    encoder = LabelEncoder()
-    encoder.fit(ohe_classes)
 
     # create a list holding the int class labels
     for i in range(len(labels)):
@@ -223,15 +181,6 @@ def _onehot(labels, desired_classes=orca_params.CLASSES, data_path=orca_params.D
     # build into a numpy array to return
     onehot_encoded_labels = np.zeros((len(encoded_labels), len(ohe_classes)))
     onehot_encoded_labels[np.arange(len(encoded_labels)), encoded_labels] = 1
-
-    # save LabelEncoder so inverse transforms can be recovered
-    label_encoder_file = os.path.join(data_path, 'label_encoder.p')
-    # rename old files instead of overwriting.
-    _backup_datafile(label_encoder_file)
-    with open(label_encoder_file, 'wb') as fp:
-        pickle.dump(encoder, fp)
-        print('Saved label encoder to {}'.format(label_encoder_file))
-
     return onehot_encoded_labels
 
 
@@ -350,20 +299,16 @@ def _extract_and_save_features(dataset,
         features = _extract_segment_features(segment[1])
         data.append([segment[0], features])
 
+    _backup_datafile(filename)
     with open(filename, 'wb') as fp:
         pickle.dump(data, fp)
 
-        # hf.create_dataset(dataset_type.name+'_DATA', data=data,
-        #                   compression="gzip", compression_opts=9)
-        # hf.create_dataset(dataset_type.name+'_LABELS', data=labels,
-        #                   compression="gzip", compression_opts=9)
-        # hf.close()
     print(f'Saved features of dataset {dataset_type.name}')
 
 
-def train_val_test_split(data_path=orca_params.DATA_PATH,
-                         train_percentage=.70,
-                         validate_percentage=0.20):
+def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
+                                    train_percentage=.70,
+                                    validate_percentage=0.20):
     """
         Index files and create a train/val/test split.  Note that label one-hot
         encoding is *not* done at this point, nor are undesired classes converted
@@ -399,47 +344,61 @@ def train_val_test_split(data_path=orca_params.DATA_PATH,
 
 def load_dataset(data_path=orca_params.DATA_PATH, dataset_type=None):
     """
-        Load the lists of files and labels for train, val, or test set.  One-hot
-        encoding of the labels is performed at this time based on the desired
-        classes specified in orca_params.CLASSES (all others are mapped to 'Other').
-        The pickled LabelEncoder() is also saved so that an inverse transform can
-        later be performed with it if desired.
+        Loads the features datasets from the file system.
+
+        Returns [features, labels] : [num_samples(num_samples), np.array (num_samples, num_frames, num_bands, 1)]
     """
 
     if dataset_type not in DatasetType:
         raise ValueError('ERROR: invalid DatasetType specified.')
-    if dataset_type == DatasetType.TRAIN:
-        indices_file = os.path.join(data_path, 'train_map.p')
-    elif dataset_type == DatasetType.VALIDATE:
-        indices_file = os.path.join(data_path, 'validate_map.p')
-    elif dataset_type == DatasetType.TEST:
-        indices_file = os.path.join(data_path, 'test_map.p')
+    features_file = os.path.join(data_path, dataset_type.name+'.features')
 
-    if os.path.exists(indices_file):
-        with open(indices_file, 'rb') as f:
-            flattened = pickle.load(f)
+    if os.path.exists(features_file):
+        with open(features_file, 'rb') as f:
+            features = pickle.load(f)
         print('\nLoaded {} dataset from {}'.format(
-            dataset_type.name, indices_file))
+            dataset_type.name, features_file))
     else:
         raise Exception(
             'ERROR: run database_parser.py to generate datafiles first.')
 
-    labels, files = zip(*flattened)
+    labels, features = zip(*features)
 
-    return files, _onehot(labels)
+    return features, labels
 
+
+def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save = True):
+    """
+        Saves LabelEncoder so inverse transforms can be recovered
+
+        Returns encoder : LabelEncoder
+    """
+
+    encoder = LabelEncoder()
+    encoder.fit(classes)
+    if save:
+        label_encoder_file = os.path.join(data_path, 'label_encoder.p')
+        # rename old files instead of overwriting.
+        _backup_datafile(label_encoder_file)
+        with open(label_encoder_file, 'wb') as fp:
+            pickle.dump(encoder, fp)
+            print('Saved label encoder to {}'.format(label_encoder_file))
+
+    return encoder
 
 if __name__ == '__main__':
 
     # generate and save index files
-    train_val_test_split()
+    # read_files_and_extract_features()
 
-    # load all datasets to validate
-    for dataset_type in DatasetType:
-        files, labels = load_dataset(dataset_type=dataset_type)
-        print('\nDatasetType={}'.format(dataset_type.name))
-        print('Sample files:')
-        pprint.pprint(files[:5])
-        print('Counts by label:')
-        print(np.sum(labels, axis=0).astype(int))
-    
+    # load the dataset features from disk.
+    train_features, train_labels = load_dataset(
+        orca_params.DATA_PATH, DatasetType.TRAIN)
+    validate_features, validate_labels = load_dataset(
+        orca_params.DATA_PATH, DatasetType.VALIDATE)
+
+    # shuffle, one hot and filter labels
+    classes = set([set(train_labels), set(validate_labels)])
+    encoder = create_label_encoding(classes)
+    train_labels = encode_labels(train_labels, encoder)
+    validate_labels = encode_labels(validate_labels, encoder)
