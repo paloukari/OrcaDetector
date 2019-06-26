@@ -40,4 +40,5 @@ BATCH_SIZE = 32
 # between params.NUM_FRAMES and params.EXAMPLE_WINDOW_SECONDS (I think).  It will
 # take some debugging to work with shorter samples, but it may be worthwhile since
 # our dataset has quite a few samples < 5 sec.
-FILE_MAX_SIZE_SECONDS = 5
+FILE_MAX_SIZE_SECONDS = 10.00
+FILE_SAMPLING_SIZE_SECONDS = 1.0
