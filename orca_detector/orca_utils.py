@@ -13,6 +13,7 @@ import orca_params
 import os
 import matplotlib.pyplot as plt
 import matplotlib
+import numpy as np
 matplotlib.use('Agg')
 
 # project-specific imports

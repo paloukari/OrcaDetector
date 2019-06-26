@@ -10,10 +10,8 @@ from vggish_model import OrcaVGGish
 from orca_utils import plot_train_metrics, save_model
 from orca_params import DatasetType
 from generator import WavDataGenerator
-from database_parser import load_dataset
+from database_parser import load_features, create_label_encoding, encode_labels
 import orca_params
-import database_parser
-import h5py
 import os
 import tensorflow as tf
 import datetime
@@ -27,11 +25,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
-def create_network():
-    """ Instantiate but don't yet fit the model."""
+def create_network(classes):
+    """ 
+    Instantiate but don't yet fit the model.
+    Create the output shape based on the classes length
+    """
 
     sound_extractor = OrcaVGGish(load_weights=True,
                                  weights='audioset',
+                                 out_dim=len(classes),
                                  pooling='avg').get_model()
 
     return sound_extractor
@@ -43,27 +45,27 @@ def run(**params):
     print(f'Keras version: {tf.keras.__version__}')
 
     # load the dataset features from disk.
-    train_features, train_labels = load_dataset(
+    train_features, train_labels = load_features(
         orca_params.DATA_PATH, DatasetType.TRAIN)
-    validate_features, validate_labels = load_dataset(
+    validate_features, validate_labels = load_features(
         orca_params.DATA_PATH, DatasetType.VALIDATE)
 
     # shuffle, one hot and filter labels
-    classes = set([set(train_labels), set(validate_labels)])
-    encoder = create_label_encoding(classes)
+    # TODO: implement shuffling
+    # TODO: implement classes filtering based on the data distributιον
+    
+    classes = set(train_labels).union(set(validate_labels))
+    encoder = create_label_encoding(list(classes))
     train_labels = encode_labels(train_labels, encoder)
     validate_labels = encode_labels(validate_labels, encoder)
 
-    model = create_network()
+    model = create_network(classes)
 
-    history = model.fit(train_features,
-                        train_labels,
-                        validation_data=validation_generator,
-                        class_weight=orca_params.CLASS_WEIGHTS,
+    history = model.fit(x=train_features,
+                        y=train_labels,
+                        validation_data=(validate_features, validate_labels),
                         epochs=orca_params.EPOCHS,
-                        use_multiprocessing=True,
-                        verbose=1,
-                        workers=1)
+                        verbose=1)
 
     # save loss and accuracy plots to disk
     loss_fig_path, acc_fig_path = plot_train_metrics(history, RUN_TIMESTAMP)

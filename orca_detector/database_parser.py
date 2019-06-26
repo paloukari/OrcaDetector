@@ -169,17 +169,11 @@ def encode_labels(labels, encoder):
             np.array[observations, classes] representing the labels
     """
 
-    # convert to lists (zip generates tuples)
-    labels = list(labels)
-
-    # create a list holding the int class labels
-    for i in range(len(labels)):
-        if not labels[i] in orca_params.CLASSES:
-            labels[i] = 'Other'
     encoded_labels = encoder.transform(labels)
 
     # build into a numpy array to return
-    onehot_encoded_labels = np.zeros((len(encoded_labels), len(ohe_classes)))
+    onehot_encoded_labels = np.zeros(
+        (len(encoded_labels), len(encoder.classes_)))
     onehot_encoded_labels[np.arange(len(encoded_labels)), encoded_labels] = 1
     return onehot_encoded_labels
 
@@ -342,7 +336,7 @@ def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
                                    dataset_type)
 
 
-def load_dataset(data_path=orca_params.DATA_PATH, dataset_type=None):
+def load_features(data_path=orca_params.DATA_PATH, dataset_type=None):
     """
         Loads the features datasets from the file system.
 
@@ -364,10 +358,16 @@ def load_dataset(data_path=orca_params.DATA_PATH, dataset_type=None):
 
     labels, features = zip(*features)
 
-    return features, labels
+    features = np.array(features)
+    labels = np.array(labels)
+    
+    # We need to remove one empty dimension
+    features = features[:, 0, :, :, :]
+
+    return np.array(features), np.array(labels)
 
 
-def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save = True):
+def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
     """
         Saves LabelEncoder so inverse transforms can be recovered
 
@@ -386,19 +386,20 @@ def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save = True)
 
     return encoder
 
+
 if __name__ == '__main__':
 
-    # generate and save index files
+    # generate and save features
     # read_files_and_extract_features()
 
     # load the dataset features from disk.
-    train_features, train_labels = load_dataset(
+    train_features, train_labels = load_features(
         orca_params.DATA_PATH, DatasetType.TRAIN)
-    validate_features, validate_labels = load_dataset(
+    validate_features, validate_labels = load_features(
         orca_params.DATA_PATH, DatasetType.VALIDATE)
 
     # shuffle, one hot and filter labels
-    classes = set([set(train_labels), set(validate_labels)])
-    encoder = create_label_encoding(classes)
+    classes = set(train_labels).union(set(validate_labels))
+    encoder = create_label_encoding(list(classes))
     train_labels = encode_labels(train_labels, encoder)
     validate_labels = encode_labels(validate_labels, encoder)
