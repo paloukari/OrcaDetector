@@ -3,7 +3,7 @@
 This UC Berkeley Master of Information in Data Science capstone project was developed by
 [Spyros Garyfallos](mailto:spiros.garifallos@berkeley.edu ), [Ram Iyer](mailto:ram.iyer@berkeley.edu), and [Mike Winton](mailto:mwinton@berkeley.edu).
 
-## 0. Provision a cloud GPU machine
+## 1. Provision a cloud GPU machine
 
 ### Using AWS
 
@@ -47,24 +47,6 @@ SSH on this host to setup the container.
 ssh -i ~/.ssh/id_rsa {SERVER_IP}
 ```
 
-Once there, allow TCP inbound on 32001 to use for exposing the dev container
-```
-ufw allow 32001/tcp
-```
-
->Note:You'll need to check-in your public SSH key in the keys folder and modify the last layer of the dockerfile to get access to the container from VsCode
-
-## 1. Set up required environment variables - UPDATE
-
-Set the environment variable for MLFlow in your system's `~/.bashrc` file (or on a Mac, in your `~/.bash_profile` file):
-
-```
-TBD
-```
-
-After saving the file, type `source ~/.bashrc` to load the new variables into your environment.
-
-
 ## 2. Clone the project repo
 
 If you haven't already, clone the project Git repo to your instance.  Doing so in your home directory is convenient, and this document assumes you have done so.
@@ -74,24 +56,39 @@ cd ~
 git clone https://github.com/paloukari/OrcaDetector
 ```
 
-## 3. Create the `orca_dev` Docker image
+## 3. Get the data and create the `orca_dev` Docker image
 
 ### GPU OPTION: Build our `orca_dev` base Docker image
 
 In the project repo, `cd` into the `orca_detector` directory:
 
 ```
-cd ~/OrcaDetector/orca_detector
+cd ~/OrcaDetector
+chmod +x setup.sh
+./setup.sh {YOUR_AWS_ID} {YOUR_AWS_KEY}
 ```
 
-Build the Docker image (this will take a while):
+The [setup.sh](setup.sh) script downloads the data and creates the container. The AWS credentials are required because the script will download the data from an s3.
+This script will also open 32001 port to allow remote debugging from VsCode into the container.
+
+Alternativelly, run the script code:
 
 ```
-sudo docker build \
-    -t orca_dev \
-    -f Dockerfile.dev \
-    --build-arg AWS_ID={YOUR_AWS_ID} \
-    --build-arg AWS_SECRET={YOUR_AWS_SECRET} .
+ufw allow 32001/tcp
+
+apt-get install -y awscli
+aws configure set aws_access_key_id $1
+aws configure set aws_secret_access_key $2
+
+aws s3 cp s3://w251-orca-detector-data/data.tar.gz ./
+tar -xvf ./data.tar.gz -C ./
+rm ./data.tar.gz
+
+aws s3 cp s3://w251-orca-detector-data/vggish_weights.tar.gz ./
+tar -xvf ./vggish_weights.tar.gz -C ./
+rm ./vggish_weights.tar.gz
+
+docker build -t orca_dev -f ./orca_detector/Dockerfile.dev ./orca_detector
 ```
 
 ## 4. Launch an `orca_dev` Docker container
@@ -107,6 +104,9 @@ sudo docker run \
     --name orca_dev \
     -ti \
     -e JUPYTER_ENABLE_LAB=yes \
+    -v ~/OrcaDetector:/src \
+    -v ~/OrcaDetector/data:/data \
+    -v ~/OrcaDetector/vggish_weights:/vggish_weights \
     -v ~/OrcaDetector/results:/results \
     -p 8888:8888 \
     -p 4040:4040 \
@@ -135,7 +135,7 @@ python3 vggish_model.py
 If it was successful, you should see a Keras model summary.
 
 
-### (REMOVE?) Verify that the `vggish` TF smoke test runs
+### Verify that the `vggish` TF smoke test runs
 
 Once inside the container, the following script should run an end-to-end check of the `vggish` pipeline:
 

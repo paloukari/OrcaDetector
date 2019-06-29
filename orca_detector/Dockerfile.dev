@@ -25,28 +25,13 @@ RUN pip install --upgrade setuptools
 RUN pip3 install jupyter -U && \
     pip3 install jupyterlab
 
-# Clone the repo
-RUN git clone https://github.com/paloukari/OrcaDetector
 
 # Install all dependency libs for the project.
-RUN pip3 install -r OrcaDetector/orca_detector/requirements.pip
+COPY requirements.pip /
+RUN pip3 install -r ./requirements.pip
 
-# Download the data
-RUN apt-get install -y awscli
-
-ARG AWS_ID                                                                
-ARG AWS_SECRET                                                            
-RUN aws configure set aws_access_key_id ${AWS_ID}
-RUN aws configure set aws_secret_access_key ${AWS_SECRET}
-
-RUN aws s3 cp s3://w251-orca-detector-data/data.tar.gz .
-RUN tar -xvf data.tar.gz
-
-RUN aws s3 cp s3://w251-orca-detector-data/vggish_weights.tar.gz .
-RUN tar -xvf vggish_weights.tar.gz
 
 # Install and configure the SSH Server
-
 RUN apt-get update && apt-get install -y openssh-server
 RUN systemctl enable ssh
 RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
