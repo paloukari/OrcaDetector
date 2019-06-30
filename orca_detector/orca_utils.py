@@ -16,8 +16,6 @@ import matplotlib
 import numpy as np
 matplotlib.use('Agg')
 
-# project-specific imports
-
 
 def plot_train_metrics(model_history, run_timestamp='unspecified'):
     """

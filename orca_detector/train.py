@@ -9,7 +9,6 @@ W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 from vggish_model import OrcaVGGish
 from orca_utils import plot_train_metrics, save_model
 from orca_params import DatasetType
-from generator import WavDataGenerator
 from database_parser import load_features, create_label_encoding, encode_labels
 import orca_params
 import os
@@ -19,8 +18,6 @@ from keras.models import Sequential
 
 # Reduce TensorFlow verbosity
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-# project-specific imports
 
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
@@ -52,7 +49,7 @@ def run(**params):
 
     # shuffle, one hot and filter labels
     # TODO: implement shuffling
-    # TODO: implement classes filtering based on the data distributιον
+    # TODO: implement classes filtering based on the data distributιοn
     
     classes = set(train_labels).union(set(validate_labels))
     encoder = create_label_encoding(list(classes))

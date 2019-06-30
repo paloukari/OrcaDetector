@@ -21,10 +21,6 @@ from collections import defaultdict
 from mel_features import frame, log_mel_spectrogram
 from sklearn.preprocessing import LabelEncoder
 
-# project-specific imports
-import orca_params
-from orca_params import DatasetType
-
 
 def _label_files(data_path=orca_params.DATA_PATH):
     """
@@ -61,8 +57,8 @@ def _label_files(data_path=orca_params.DATA_PATH):
             [os.path.join(dirpath, file) for file in filenames])
         # print('Loaded data from {}, mapped to label={}'.format(dirpath, label))
 
-    print('In walking directory, observed {} labels for {} audio files.'.format(
-        len(all_samples), total_files))
+    print(f'''In walking directory, 
+        observed {len(all_samples)} labels for {total_files} audio files.''')
     return all_samples
 
 
@@ -84,7 +80,10 @@ def _backup_datafile(file_path, suffix='-old'):
         print('Renamed {} to {}'.format(file_path, renamed_file))
 
 
-def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECONDS):
+def _quantize_sample(label,
+                     file,
+                     sample_len=orca_params.FILE_SAMPLING_SIZE_SECONDS,
+                     max_len=orca_params.FILE_MAX_SIZE_SECONDS):
     """
         Splits up a given file into non-overlapping segments of the specified length.
         Returns a list containing (label, 'file:start:frames') of each segment.
@@ -95,7 +94,8 @@ def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECO
             label = string name
             file = *.wav audio file
             sample_length = length of audio segments to be identified
-
+            max_len = the maximum acceptable input length to quantize
+            
         RETURNS:
             list of audio segments
     """
@@ -103,6 +103,7 @@ def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECO
     with sf.SoundFile(file) as wav_file:
         # make sure sample is long enough
         min_frames = int(sample_len * wav_file.samplerate)  # e.g. 2 * 16000
+        # TODO: Drop the long samples
         if wav_file.frames > min_frames:
             file_parts = np.arange(0, wav_file.frames, min_frames)
             sample_list = [[label, '{}:{}:{}'.format(
@@ -110,15 +111,12 @@ def _quantize_sample(label, file, sample_len=orca_params.FILE_SAMPLING_SIZE_SECO
 
             # truncate final sample which will be shorter than min required for a spectrogram
             del sample_list[-1]
-            # add it back in with some overlap
-            sample_list.append([label, '{}:{}:{}'.format(
-                file, int(wav_file.frames - min_frames), min_frames)])
             return sample_list
         else:
             return []
 
 
-def _quantize_samples(samples, sample_len=orca_params.FILE_MAX_SIZE_SECONDS):
+def _quantize_samples(samples):
     """
         Quantizes a list of audio files into short segments
 
@@ -273,10 +271,9 @@ def _extract_and_save_features(dataset,
                                backup=True):
     """
         Extracts the features (melspectrogram) of the flattened dataset 
-        and saves extracted features in the specified HDF5 file
+        and saves extracted features in the specified pickle file
     """
 
-    # with h5py.File(hdf5_data_path, 'w') as hf:
     # check if the dataset_type is valid
     if dataset_type not in [item.value for item in DatasetType]:
         raise ValueError('ERROR: invalid DatasetType specified.')
@@ -360,7 +357,7 @@ def load_features(data_path=orca_params.DATA_PATH, dataset_type=None):
 
     features = np.array(features)
     labels = np.array(labels)
-    
+
     # We need to remove one empty dimension
     features = features[:, 0, :, :, :]
 

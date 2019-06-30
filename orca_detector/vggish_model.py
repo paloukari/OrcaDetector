@@ -46,22 +46,22 @@ class VGGish(object):
         # Block 1
         self.x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu',
                         padding='same', name='conv1')(self.audio_input)
-        self.x = MaxPooling2D((2, 2), strides=(
-            2, 2), padding='same', name='pool1')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
+                              name='pool1')(self.x)
 
         # Block 2
-        self.x = Conv2D(128, (3, 3), strides=(
-            1, 1), activation='relu', padding='same', name='conv2')(self.x)
-        self.x = MaxPooling2D((2, 2), strides=(
-            2, 2), padding='same', name='pool2')(self.x)
+        self.x = Conv2D(128, (3, 3), strides=(1, 1), activation='relu',
+                        padding='same', name='conv2')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2),
+                              padding='same', name='pool2')(self.x)
 
         # Block 3
         self.x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu',
                         padding='same', name='conv3/conv3_1')(self.x)
         self.x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu',
                         padding='same', name='conv3/conv3_2')(self.x)
-        self.x = MaxPooling2D((2, 2), strides=(
-            2, 2), padding='same', name='pool3')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
+                              name='pool3')(self.x)
 
         # Block 4
         self.x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu',
@@ -75,8 +75,8 @@ class VGGish(object):
             DO NOT RENAME LAYERS or weights will not be loaded.
         """
         # FC block
-        self.x = MaxPooling2D((2, 2), strides=(
-            2, 2), padding='same', name='pool4')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
+                              name='pool4')(self.x)
         self.x = Flatten(name='flatten_')(self.x)
         self.x = Dense(4096, activation='relu',
                        name='vggish_fc1/fc1_1')(self.x)
@@ -220,8 +220,8 @@ class OrcaVGGish(VGGish):
         """
 
         # FC block
-        self.x = MaxPooling2D((2, 2), strides=(
-            2, 2), padding='same', name='orca_pool4')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
+                              name='orca_pool4')(self.x)
         self.x = Flatten(name='orca_flatten_')(self.x)
         self.x = Dense(4096, activation='relu',
                        name='orca_fc1/orca_fc1_1')(self.x)
