@@ -244,3 +244,16 @@ TBD
 ### Testing
 
 TBD
+
+## 7. Recording from online live feed sources
+
+To record audio samples from online live feed sources like [this](http://live.orcasound.net/orcasound-lab), in a browser press F12 to inspect the network traffic, get the stream URL (looks like this https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab/hls/1562023935/live.m3u8 ) and run this command:
+```
+ffmpeg -y -i {URL} test.mp3
+```
+
+To setup a test audio live feed from an audio sample, run this command
+
+```
+#TODO
+``` 
