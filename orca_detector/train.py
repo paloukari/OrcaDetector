@@ -47,10 +47,7 @@ def run(**params):
     validate_features, validate_labels = load_features(
         orca_params.DATA_PATH, DatasetType.VALIDATE)
 
-    # shuffle, one hot and filter labels
-    # TODO: implement shuffling
-    # TODO: implement classes filtering based on the data distributιοn
-    
+    # one hot and filter labels
     classes = set(train_labels).union(set(validate_labels))
     encoder = create_label_encoding(list(classes))
     train_labels = encode_labels(train_labels, encoder)
