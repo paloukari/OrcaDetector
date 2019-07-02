@@ -19,12 +19,10 @@ DATA_PATH = '/data/'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
-
+OTHER_CLASS = 'Other'
 # Classification params
-CLASSES = ['KillerWhale', 'FrasersDolphin']
-
-# Number of classes needs to account for "Other"
-NUM_CLASSES = len(CLASSES) + 1
+REMOVE_CLASSES = []
+OTHER_CLASSES = []
 
 # Weighting to account for imbalance when calculating loss
 # TODO: update weights based on observed balance

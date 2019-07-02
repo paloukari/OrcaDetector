@@ -95,7 +95,7 @@ def _quantize_sample(label,
             file = *.wav audio file
             sample_length = length of audio segments to be identified
             max_len = the maximum acceptable input length to quantize
-            
+
         RETURNS:
             list of audio segments
     """
@@ -275,7 +275,7 @@ def _extract_and_save_features(dataset,
     """
 
     # check if the dataset_type is valid
-    if dataset_type not in [item.value for item in DatasetType]:
+    if dataset_type not in [item.value for item in orca_params.DatasetType]:
         raise ValueError('ERROR: invalid DatasetType specified.')
     print('Extracting features from {} segments for {} dataset.'.format(
         (len(dataset)), (dataset_type.name)))
@@ -307,9 +307,9 @@ def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
     """
     all_samples = _label_files(data_path=orca_params.DATA_PATH)
 
-    datasets = {DatasetType.TRAIN: defaultdict(list),
-                DatasetType.VALIDATE: defaultdict(list),
-                DatasetType.TEST: defaultdict(list)}
+    datasets = {orca_params.DatasetType.TRAIN: defaultdict(list),
+                orca_params.DatasetType.VALIDATE: defaultdict(list),
+                orca_params.DatasetType.TEST: defaultdict(list)}
 
     # do a stratified train/val/test split
     for label, files in all_samples.items():
@@ -318,11 +318,11 @@ def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
         random.shuffle(files)
         num_train_files = int((len(files) + 1) * train_percentage)
         num_validate_files = int((len(files) + 1) * validate_percentage)
-        datasets[DatasetType.TRAIN][label] = \
+        datasets[orca_params.DatasetType.TRAIN][label] = \
             files[: num_train_files]
-        datasets[DatasetType.VALIDATE][label] = \
+        datasets[orca_params.DatasetType.VALIDATE][label] = \
             files[num_train_files: num_train_files + num_validate_files]
-        datasets[DatasetType.TEST][label] = \
+        datasets[orca_params.DatasetType.TEST][label] = \
             files[num_train_files + num_validate_files:]
 
     # quantize and flatten each dataset
@@ -333,14 +333,17 @@ def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
                                    dataset_type)
 
 
-def load_features(data_path=orca_params.DATA_PATH, dataset_type=None):
+def load_features(data_path=orca_params.DATA_PATH,
+                  dataset_type=None,
+                  remove_classes=orca_params.REMOVE_CLASSES,
+                  other_classes=orca_params.OTHER_CLASSES):
     """
         Loads the features datasets from the file system.
 
         Returns [features, labels] : [num_samples(num_samples), np.array (num_samples, num_frames, num_bands, 1)]
     """
 
-    if dataset_type not in DatasetType:
+    if dataset_type not in orca_params.DatasetType:
         raise ValueError('ERROR: invalid DatasetType specified.')
     features_file = os.path.join(data_path, dataset_type.name+'.features')
 
@@ -353,6 +356,14 @@ def load_features(data_path=orca_params.DATA_PATH, dataset_type=None):
         raise Exception(
             'ERROR: run database_parser.py to generate datafiles first.')
 
+    #remove classes
+    features = [item for item in features if item[0] not in remove_classes]
+    
+    #rename classes
+    for item in features:
+        if item[0] in other_classes: 
+            item[0] = orca_params.OTHER_CLASS
+
     labels, features = zip(*features)
 
     features = np.array(features)
@@ -361,7 +372,7 @@ def load_features(data_path=orca_params.DATA_PATH, dataset_type=None):
     # We need to remove one empty dimension
     features = features[:, 0, :, :, :]
 
-    return np.array(features), np.array(labels)
+    return features, labels
 
 
 def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
@@ -391,9 +402,9 @@ if __name__ == '__main__':
 
     # load the dataset features from disk.
     train_features, train_labels = load_features(
-        orca_params.DATA_PATH, DatasetType.TRAIN)
+        orca_params.DATA_PATH, orca_params.DatasetType.TRAIN)
     validate_features, validate_labels = load_features(
-        orca_params.DATA_PATH, DatasetType.VALIDATE)
+        orca_params.DATA_PATH, orca_params.DatasetType.VALIDATE)
 
     # shuffle, one hot and filter labels
     classes = set(train_labels).union(set(validate_labels))
