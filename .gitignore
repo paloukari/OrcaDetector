@@ -9,7 +9,9 @@ vggish_weights/
 __pycache__/
 *.py[cod]
 *$py.class
-.vscode
+
+.vscode/
+
 
 # C extensions
 *.so
@@ -108,3 +110,4 @@ ENV/
 
 # mypy
 .mypy_cache/
+

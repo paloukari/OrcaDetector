@@ -9,13 +9,13 @@ Adapted from: https://github.com/mwinton/w266-final-project
 """
 
 # import matplotlib this way to run without a display
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import os
-
-# project-specific imports
 import orca_params
+import os
+import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
+matplotlib.use('Agg')
+
 
 def plot_train_metrics(model_history, run_timestamp='unspecified'):
     """
@@ -31,13 +31,15 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
 
     # extract data from history dict
     train_losses = model_history.history['loss']
-    val_losses   = model_history.history['val_loss']
-    train_acc    = model_history.history['acc']
-    val_acc      = model_history.history['val_acc']
+    val_losses = model_history.history['val_loss']
+    train_acc = model_history.history['acc']
+    val_acc = model_history.history['val_acc']
 
     # define filenames
-    loss_fig_path = os.path.join(orca_params.OUTPUT_PATH, f'orca_train_loss_{run_timestamp}.png')
-    acc_fig_path  = os.path.join(orca_params.OUTPUT_PATH, f'orca_train_acc_{run_timestamp}.png')
+    loss_fig_path = os.path.join(
+        orca_params.OUTPUT_PATH, 'orca_train_loss_{}.png'.format((run_timestamp)))
+    acc_fig_path = os.path.join(
+        orca_params.OUTPUT_PATH, 'orca_train_acc_{}.png'.format((run_timestamp)))
 
     # generate and save loss plot
     plt.plot(train_losses)
@@ -77,18 +79,21 @@ def save_model(model, run_timestamp='unspecified'):
             json_path: string representing path to the saved model config json file
             weights_path: string representing path to the saved model weights
     """
-    
+
     # save model config
-    output_json = os.path.join(orca_params.OUTPUT_PATH, f'orca_config_{run_timestamp}.json')
+    output_json = os.path.join(
+        orca_params.OUTPUT_PATH, 'orca_config_{}.json'.format((run_timestamp)))
     with open(output_json, 'w') as json_file:
         json_file.write(model.to_json())
 
     # save trained model weights
-    output_weights = os.path.join(orca_params.OUTPUT_PATH, f'orca_weights_{run_timestamp}.hdf5')
+    output_weights = os.path.join(
+        orca_params.OUTPUT_PATH, 'orca_weights_{}.hdf5'.format((run_timestamp)))
     model.save_weights(output_weights)
-    
+
     # Create symbolic link to the most recent weights (to use for testing)
-    symlink_path = os.path.join(orca_params.OUTPUT_PATH, 'orca_weights_latest.hdf5')
+    symlink_path = os.path.join(
+        orca_params.OUTPUT_PATH, 'orca_weights_latest.hdf5')
     try:
         os.symlink(output_weights, symlink_path)
     except FileExistsError:
@@ -96,7 +101,5 @@ def save_model(model, run_timestamp='unspecified'):
         os.remove(symlink_path)
         os.symlink(output_weights, symlink_path)
     print(f'Created symbolic link to final weights -> {symlink_path}')
-    
+
     return output_json, output_weights
-
-
