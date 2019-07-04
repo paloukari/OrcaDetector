@@ -32,7 +32,8 @@ ibmcloud sl vs create \
     --billing=hourly \
     --network 1000 \
     --key={YOUR_KEY_ID} \
-    --flavor AC2_8X60X100 --san
+    --flavor AC2_8X60X100 \
+    --san
 ```
 
 Alternately, provision a slower, cheaper P100:
@@ -45,7 +46,7 @@ ibmcloud sl vs create \
   --image=2263543 \
   --billing=hourly \
   --network 1000 \
-  --key=$MY_IBM_KEY \
+  --key={YOUR_KEY_ID} \
   --flavor AC1_8X60X100 \
   --san
 ```
