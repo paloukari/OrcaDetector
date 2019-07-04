@@ -41,7 +41,7 @@ Alternately, provision a slower, cheaper P100:
 ```
 ibmcloud sl vs create \
   --datacenter=wdc07 \
-  --hostname=outrage-us \
+  --hostname=p100a \
   --domain=orca.dev \
   --image=2263543 \
   --billing=hourly \
