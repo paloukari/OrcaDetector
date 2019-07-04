@@ -26,7 +26,7 @@ OTHER_CLASSES = []
 
 # Weighting to account for imbalance when calculating loss
 # TODO: update weights based on observed balance
-CLASS_WEIGHTS = {0: 1., 1: 1., 2: 1.}
+# CLASS_WEIGHTS = {0: 1., 1: 1., 2: 1.}
 OPTIMIZER = 'sgd'
 LOSS = 'categorical_crossentropy'
 

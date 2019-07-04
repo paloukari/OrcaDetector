@@ -192,7 +192,9 @@ class VGGish(object):
         self.model.summary()
 
         # Build and compile the model
-        self.model.compile(optimizer=optimizer, loss=loss,
+        # TODO: consider specifying loss_weights to help with class imbalance
+        self.model.compile(optimizer=optimizer,
+                           loss=loss,
                            metrics=['accuracy'])
         print('Compiled {} model with {} optimizer and {} loss.'.format(
             (model_name), (optimizer), (loss)))
