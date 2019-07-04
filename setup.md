@@ -11,7 +11,7 @@ If using AWS, as assumed by these setup instructions, provision an Ubuntu 18.04 
 
 ### Using IBM Cloud
 
-Provision a server to run the training code. You can you this server as your development environment too.  Using imsage `2263543`, `docker` and `nvidia-docker` are already installed.
+Provision a server to run the training code. You can you this server as your development environment too.  Using image `2263543`, `docker` and `nvidia-docker` are already installed.
 
 Install the CLI, add your ssh public key, and get the key id
 ```
@@ -25,7 +25,7 @@ Provision a V100 using this key id
 
 ```
 ibmcloud sl vs create \
-    --datacenter=lon04 \
+    --datacenter=wdc07 \
     --hostname=v100a \
     --domain=orca.dev \
     --image=2263543 \
