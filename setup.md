@@ -11,7 +11,7 @@ If using AWS, as assumed by these setup instructions, provision an Ubuntu 18.04 
 
 ### Using IBM Cloud
 
-Provision a server to run the training code. You can you this server as your development environment too.
+Provision a server to run the training code. You can you this server as your development environment too.  Using image `2263543`, `docker` and `nvidia-docker` are already installed.
 
 Install the CLI, add your ssh public key, and get the key id
 ```
@@ -25,14 +25,30 @@ Provision a V100 using this key id
 
 ```
 ibmcloud sl vs create \
-    --datacenter=lon04 \
+    --datacenter=wdc07 \
     --hostname=v100a \
-    --domain=your.domain.com \
+    --domain=orca.dev \
     --image=2263543 \
     --billing=hourly \
     --network 1000 \
     --key={YOUR_KEY_ID} \
-    --flavor AC2_8X60X100 --san
+    --flavor AC2_8X60X100 \
+    --san
+```
+
+Alternately, provision a slower, cheaper P100:
+
+```
+ibmcloud sl vs create \
+  --datacenter=wdc07 \
+  --hostname=p100a \
+  --domain=orca.dev \
+  --image=2263543 \
+  --billing=hourly \
+  --network 1000 \
+  --key={YOUR_KEY_ID} \
+  --flavor AC1_8X60X100 \
+  --san
 ```
 
 
@@ -124,6 +140,14 @@ Once inside the container, try running:
 nvidia-smi
 ```
 
+### Preprocess the wav files into training segments
+
+To process the source data, this **only needs to be run once**.  This will generate the individual audio segment feature files if they don't already exist.  Once this has been run, the resulting feature files will be included in our `data.tar.gz` archive.
+
+```
+python3 database_parser.py
+```
+
 ### Verify that the `vggish` Keras model builds
 
 Once inside the container, the following script should run to make sure we can instantiate the Keras model and load it's pretrained weights:
@@ -135,15 +159,8 @@ python3 vggish_model.py
 If it was successful, you should see a Keras model summary.
 
 
-### Verify that the `vggish` TF smoke test runs
 
-Once inside the container, the following script should run an end-to-end check of the `vggish` pipeline:
-
-```
-python3 vggish/vggish_smoke_test.py
-```
-
-### (OPTIONAL) Launch Jupyter Lab in the container
+## 5. (OPTIONAL) Launch Jupyter Lab in the container
 
 After you've started the container as described above, if you want to _also_ open a Jupyter notebook (e.g. for development/debugging), issue this command:
 

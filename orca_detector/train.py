@@ -49,6 +49,7 @@ def run(**params):
 
     # one hot and filter labels
     classes = set(train_labels).union(set(validate_labels))
+    # train and save encoder to disk for later use
     encoder = create_label_encoding(list(classes))
     train_labels = encode_labels(train_labels, encoder)
     validate_labels = encode_labels(validate_labels, encoder)

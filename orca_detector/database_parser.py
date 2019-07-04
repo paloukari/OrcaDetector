@@ -10,6 +10,7 @@ import numpy as np
 import mel_params
 import orca_params
 import os
+import pandas as pd
 import pickle
 import pprint
 import random
@@ -21,6 +22,8 @@ from collections import defaultdict
 from mel_features import frame, log_mel_spectrogram
 from sklearn.preprocessing import LabelEncoder
 
+# Set a seed so we get consistent results
+np.random.seed(251)
 
 def _label_files(data_path=orca_params.DATA_PATH):
     """
@@ -285,8 +288,9 @@ def _extract_and_save_features(dataset,
         os.remove(filename)
     data = []
     for index, segment in enumerate(dataset):
-        if index % 100 == 0:
-            print(f'{100*index/len(dataset):.3f}%')
+        # display progress udpates
+        if index % 500 == 0:
+            print(f'{100*index/len(dataset):.2f}%')
         features = _extract_segment_features(segment[1])
         data.append([segment[0], features])
 
@@ -299,12 +303,24 @@ def _extract_and_save_features(dataset,
 
 def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
                                     train_percentage=.70,
-                                    validate_percentage=0.20):
+                                    validate_percentage=0.20,
+                                    overwrite=False):
     """
         Index files and create a train/val/test split.  Note that label one-hot
         encoding is *not* done at this point, nor are undesired classes converted
         to "Other".  That is done when loading the dataset.
     """
+
+    if not overwrite:
+        # check if all of the features files exist, and if so return.
+        files_exist = True
+        for d in orca_params.DatasetType:
+            if not os.path.exists(os.path.join(data_path, d.name+'.features')):
+                files_exist = False
+                break
+        if files_exist:
+            return
+        
     all_samples = _label_files(data_path=orca_params.DATA_PATH)
 
     datasets = {orca_params.DatasetType.TRAIN: defaultdict(list),
@@ -392,22 +408,14 @@ def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
             pickle.dump(encoder, fp)
             print('Saved label encoder to {}'.format(label_encoder_file))
 
+        # Also save human-readable version
+        csv_file = os.path.join(data_path, 'label_encoder.txt')
+        df = pd.DataFrame(list(enumerate(encoder.classes_)), columns=['encoded_id', 'label'])
+        df.to_csv(csv_file, index=False)
+
     return encoder
 
 
 if __name__ == '__main__':
-
-    # generate and save features
-    # read_files_and_extract_features()
-
-    # load the dataset features from disk.
-    train_features, train_labels = load_features(
-        orca_params.DATA_PATH, orca_params.DatasetType.TRAIN)
-    validate_features, validate_labels = load_features(
-        orca_params.DATA_PATH, orca_params.DatasetType.VALIDATE)
-
-    # shuffle, one hot and filter labels
-    classes = set(train_labels).union(set(validate_labels))
-    encoder = create_label_encoding(list(classes))
-    train_labels = encode_labels(train_labels, encoder)
-    validate_labels = encode_labels(validate_labels, encoder)
+    read_files_and_extract_features()
+    print('Done extracting features!')
