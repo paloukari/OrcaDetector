@@ -36,10 +36,10 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     val_acc = model_history.history['val_acc']
 
     # define filenames
-    loss_fig_path = os.path.join(
-        orca_params.OUTPUT_PATH, 'orca_train_loss_{}.png'.format((run_timestamp)))
-    acc_fig_path = os.path.join(
-        orca_params.OUTPUT_PATH, 'orca_train_acc_{}.png'.format((run_timestamp)))
+    loss_filename = f'orca_loss_plot_val_loss_={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.png'
+    loss_fig_path = os.path.join(orca_params.OUTPUT_PATH, loss_filename)
+    acc_filename = f'orca_accuracy_plot_val_loss_={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.png'
+    acc_fig_path = os.path.join(orca_params.OUTPUT_PATH, acc_filename)
 
     # generate and save loss plot
     plt.plot(train_losses)
