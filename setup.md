@@ -300,10 +300,24 @@ python3 inference.py \
 
 ## 7. Recording from online live feed sources
 
-To record audio samples from online live feed sources like [this](http://live.orcasound.net/orcasound-lab), in a browser press F12 to inspect the network traffic, get the stream URL (looks like this https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab/hls/1562023935/live.m3u8 ) and run this command:
+We are recording audio samples from the following hydrophone live streams as background "Noise":
+
+- [OrcasoundLab](http://live.orcasound.net/orcasound-lab)
+
+The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  From within the `orca_dev` Docker container, type:
+
 ```
-ffmpeg -y -i {URL} test.mp3
+cd orca_detector
+nohup python3 noise_collector.py > nohup.out 2>&1 &
 ```
+
+Write down the pid that's displayed when the background job starts, so that you can manually kill it if/when necessary (via `kill -9 <pid>`).
+
+Then you should be able to monitor the output:
+```
+tail -f nohup.out
+```
+
 
 To setup a test audio live feed from an audio sample, run this command
 
