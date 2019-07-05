@@ -14,7 +14,7 @@ import sys
 
 from keras.models import Model
 from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, \
-    GlobalAveragePooling2D, GlobalMaxPooling2D
+    GlobalAveragePooling2D, GlobalMaxPooling2D, BatchNormalization
 from keras.engine.topology import get_source_inputs
 from keras import backend as K
 
@@ -35,7 +35,7 @@ class VGGish(object):
             Applies custom layers before passing the input into VGGish layers.
             This can be used in subclasses for BatchNormalization, for example.
         """
-        pass
+        self.x = self.audio_input
 
     def _build_vggish_base_layers(self):
         """
@@ -45,7 +45,7 @@ class VGGish(object):
 
         # Block 1
         self.x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu',
-                        padding='same', name='conv1')(self.audio_input)
+                        padding='same', name='conv1')(self.x)
         self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
                               name='pool1')(self.x)
 
@@ -212,9 +212,9 @@ class OrcaVGGish(VGGish):
 
     def custom_preprocessing_layers(self):
         """
-            TODO: implement BatchNormalization of inputs
+            Applying batch normalization.
         """
-        pass
+        self.x = BatchNormalization()(self.audio_input)
 
     def custom_top_layers(self):
         """
@@ -280,13 +280,7 @@ if __name__ == '__main__':
     """
     Simple example to confirm if weights can be loaded.
     """
-    print('Loading original VGGish model:')
-    sound_extractor = VGGish(load_weights=True,
-                             weights='audioset',
-                             include_top=False,
-                             pooling='avg').get_model()
-
-    print('\nLoading OrcaVGGish model:')
+    print('Loading OrcaVGGish model:')
     sound_extractor = OrcaVGGish(load_weights=True,
                                  weights='audioset',
                                  pooling='avg').get_model()

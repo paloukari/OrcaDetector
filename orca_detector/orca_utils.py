@@ -68,27 +68,33 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     return loss_fig_path, acc_fig_path
 
 
-def save_model(model, run_timestamp='unspecified'):
+def save_model(model, model_history, run_timestamp='unspecified'):
     """
         Generate and save figure with plot of train and validation losses.
         Currently, plot_type='epochs' is the only option supported.
         Args:
             model: trained Keras Model
+            model_history: Keras History object, used to extract loss for file names.
             run_timestamp: time of the run, to be used in naming saved artifacts from the same run
         Returns:
             json_path: string representing path to the saved model config json file
             weights_path: string representing path to the saved model weights
     """
 
+    # extract data from history dict
+    val_loss = model_history.history['val_loss'][-1]
+    val_acc = model_history.history['val_acc'][-1]
+
     # save model config
+    json_filename = f'config_val_loss={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.json'
     output_json = os.path.join(
-        orca_params.OUTPUT_PATH, 'orca_config_{}.json'.format((run_timestamp)))
+        orca_params.OUTPUT_PATH, json_filename)
     with open(output_json, 'w') as json_file:
         json_file.write(model.to_json())
 
     # save trained model weights
-    output_weights = os.path.join(
-        orca_params.OUTPUT_PATH, 'orca_weights_{}.hdf5'.format((run_timestamp)))
+    weights_filename = f'weights_val_loss={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.hdf5'
+    output_weights = os.path.join(orca_params.OUTPUT_PATH, weights_filename)
     model.save_weights(output_weights)
 
     # Create symbolic link to the most recent weights (to use for testing)

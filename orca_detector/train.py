@@ -68,7 +68,7 @@ def run(**params):
     print(f'Saved accuracy plot -> {acc_fig_path}')
 
     # save json model config file and trained weights to disk
-    json_path, weights_path = save_model(model, RUN_TIMESTAMP)
+    json_path, weights_path = save_model(model, history, RUN_TIMESTAMP)
     print(f'Saved json config -> {json_path}')
     print(f'Saved weights -> {weights_path}')
 

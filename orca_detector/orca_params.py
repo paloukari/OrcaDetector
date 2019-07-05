@@ -32,7 +32,7 @@ LOSS = 'categorical_crossentropy'
 
 # Model training
 EPOCHS = 5
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 
 FILE_MAX_SIZE_SECONDS = 10.00
 FILE_SAMPLING_SIZE_SECONDS = 0.98
