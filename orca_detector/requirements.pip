@@ -61,6 +61,7 @@ mistune==0.8.4
 mleap==0.8.1
 mlflow==0.9.1
 mock==2.0.0
+m3u8==0.3.10
 nbconvert==5.5.0
 nbformat==4.4.0
 networkx==2.3
