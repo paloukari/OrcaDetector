@@ -256,18 +256,80 @@ Once in there, open the OrcaDetector folder, install the Python extension on the
 
 ### Training
 
-TBD
+Set the relevant hyperparameters in `orca_params.py`, and then run the training script:
 
-### Testing
+```
+python3 train.py
+```
 
-TBD
+After training has completed, several timestamped files will be written to disk:
+
+- loss plot
+- accuracy plot
+- Keras json config (for documentation only)
+- Model weights (to be used for inference)
+
+There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the trained weights.
+
+> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
+ 
+### Running inference with labeled test set
+
+If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.
+
+```
+python3 inference.py \
+    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+```
+
+In addition to displaying the classification report, it is saved to disk as a json file.  The confusion matrix is not displayed (due to large size of the matrix), but is aved to disk as a csv file.  These can be loaded into a notebook for further analysis.
+
+> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
+ 
+
+### Running inference on unlabeled audio
+
+This is similar to above, with one additional CLI flag:
+
+```
+python3 inference.py \
+    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+    --predict_only    
+```
+
 
 ## 7. Recording from online live feed sources
 
-To record audio samples from online live feed sources like [this](http://live.orcasound.net/orcasound-lab), in a browser press F12 to inspect the network traffic, get the stream URL (looks like this https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab/hls/1562023935/live.m3u8 ) and run this command:
+We are recording audio samples from the following hydrophone live streams as background "Noise":
+
+- [OrcasoundLab](http://live.orcasound.net/orcasound-lab)
+
+The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  Spin up a separate `orca_dev` Docker container instance:
+
 ```
-ffmpeg -y -i {URL} test.mp3
+sudo docker run \
+    --rm \
+    --name noise_collector \
+    -tid \
+    -v ~/OrcaDetector:/src \
+    -v ~/OrcaDetector/data:/data \
+    orca_dev
 ```
+
+Then kick off the process:
+
+```
+sudo docker exec -it noise_collector bash
+cd orca_detector
+python3 noise_collector.py
+```
+
+You can detach from the container (`CTRL-P -> CTRL-Q`) and close your machine.  The script will keep running.  To re-attach:
+
+```
+docker attach noise_collector
+```
+
 
 To setup a test audio live feed from an audio sample, run this command
 

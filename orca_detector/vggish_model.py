@@ -14,7 +14,7 @@ import sys
 
 from keras.models import Model
 from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, \
-    GlobalAveragePooling2D, GlobalMaxPooling2D
+    GlobalAveragePooling2D, GlobalMaxPooling2D, BatchNormalization
 from keras.engine.topology import get_source_inputs
 from keras import backend as K
 
@@ -35,7 +35,7 @@ class VGGish(object):
             Applies custom layers before passing the input into VGGish layers.
             This can be used in subclasses for BatchNormalization, for example.
         """
-        pass
+        self.x = self.audio_input
 
     def _build_vggish_base_layers(self):
         """
@@ -45,7 +45,7 @@ class VGGish(object):
 
         # Block 1
         self.x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu',
-                        padding='same', name='conv1')(self.audio_input)
+                        padding='same', name='conv1')(self.x)
         self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
                               name='pool1')(self.x)
 
@@ -110,7 +110,7 @@ class VGGish(object):
         """
             Args:
                 load_weights = boolean if weights should be loaded
-                weights = weights to load ('audioset' weights are pre-trained on YouTube-8M).
+                weights = weights to load ('audioset' weights are pre-trained on YouTube-8M').
                 input_tensor = Keras input_layer
                 input_shape = input data shape
                 out_dim = output dimension
@@ -122,11 +122,6 @@ class VGGish(object):
             Returns:
                 A compiled Keras model instance
         """
-
-        # Validate parameters
-        if weights not in {'audioset', None}:
-            raise ValueError(
-                'Only `audioset` weights are currently supported.')
 
         if out_dim is None:
             out_dim = mel_params.EMBEDDING_SIZE  # 128
@@ -171,22 +166,28 @@ class VGGish(object):
 
         # load weights
         if load_weights:
+            # Use audioset weights for initial training
             if weights == 'audioset':
                 if include_top:
-                    print('Weights will be loaded from {}'.format(
+                    print('Loading weights from {}'.format(
                         (orca_params.WEIGHTS_PATH_TOP)))
                     self.model.load_weights(
                         orca_params.WEIGHTS_PATH_TOP, by_name=True)
                 else:
-                    print('Weights will be loaded from {}'.format(
+                    print('Loading weights from {}'.format(
                         (orca_params.WEIGHTS_PATH)))
                     if not os.path.exists(orca_params.WEIGHTS_PATH):
                         raise Exception(
                             'ERROR: cannot find {} to load.'.format((orca_params)))
                     self.model.load_weights(
                         orca_params.WEIGHTS_PATH, by_name=True)
+            # Use our own saved weights for running inference
             else:
-                raise Exception("ERROR: failed to load weights")
+                print(f'Loading weights from {weights}')
+                if not os.path.exists(weights):
+                    raise Exception('ERROR: cannot find {weights}.')
+                self.model.load_weights(weights, by_name=True)
+                
 
         # print representation of the model
         self.model.summary()
@@ -212,9 +213,9 @@ class OrcaVGGish(VGGish):
 
     def custom_preprocessing_layers(self):
         """
-            TODO: implement BatchNormalization of inputs
+            Applying batch normalization.
         """
-        pass
+        self.x = BatchNormalization()(self.audio_input)
 
     def custom_top_layers(self):
         """
@@ -280,13 +281,7 @@ if __name__ == '__main__':
     """
     Simple example to confirm if weights can be loaded.
     """
-    print('Loading original VGGish model:')
-    sound_extractor = VGGish(load_weights=True,
-                             weights='audioset',
-                             include_top=False,
-                             pooling='avg').get_model()
-
-    print('\nLoading OrcaVGGish model:')
+    print('Loading OrcaVGGish model:')
     sound_extractor = OrcaVGGish(load_weights=True,
                                  weights='audioset',
                                  pooling='avg').get_model()

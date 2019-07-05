@@ -53,6 +53,11 @@ def run(**params):
     encoder = create_label_encoding(list(classes))
     train_labels = encode_labels(train_labels, encoder)
     validate_labels = encode_labels(validate_labels, encoder)
+    print(f'\nTraining to detect the following classes:\n{encoder.classes_}')
+    print(f'Removed the following classes:\n{orca_params.REMOVE_CLASSES}')
+    print(f'Mapped the following classes to "{orca_params.OTHER_CLASS}":\n' \
+          f'{orca_params.OTHER_CLASSES}\n')
+    
 
     model = create_network(classes)
 
@@ -60,6 +65,7 @@ def run(**params):
                         y=train_labels,
                         validation_data=(validate_features, validate_labels),
                         epochs=orca_params.EPOCHS,
+                        batch_size=orca_params.BATCH_SIZE,
                         verbose=1)
 
     # save loss and accuracy plots to disk
@@ -68,7 +74,7 @@ def run(**params):
     print(f'Saved accuracy plot -> {acc_fig_path}')
 
     # save json model config file and trained weights to disk
-    json_path, weights_path = save_model(model, RUN_TIMESTAMP)
+    json_path, weights_path = save_model(model, history, RUN_TIMESTAMP)
     print(f'Saved json config -> {json_path}')
     print(f'Saved weights -> {weights_path}')
 
