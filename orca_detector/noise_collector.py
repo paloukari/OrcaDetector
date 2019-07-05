@@ -15,7 +15,8 @@ import time
 import uuid
 
 # Dictionary of streams we're recording from
-streams = {'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab/hls/1562344334/live.m3u8'}
+streams = {'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab/hls/1562344334/live.m3u8',
+           'BushPoint': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_bush_point/hls/1562351419/live.m3u8'}
 
 def _save_audio(audio_url, output_path):
     """
