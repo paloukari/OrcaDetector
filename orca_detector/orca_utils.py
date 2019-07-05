@@ -32,13 +32,16 @@ def plot_train_metrics(model_history, run_timestamp='unspecified'):
     # extract data from history dict
     train_losses = model_history.history['loss']
     val_losses = model_history.history['val_loss']
+    final_val_loss = val_losses[-1]
+
     train_acc = model_history.history['acc']
     val_acc = model_history.history['val_acc']
+    final_val_acc = val_acc[-1]
 
     # define filenames
-    loss_filename = f'orca_loss_plot_val_loss_={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.png'
+    loss_filename = f'orca_loss_plot_val_loss_={final_val_loss:.4f}_val_acc={final_val_acc:.4f}_{run_timestamp}.png'
     loss_fig_path = os.path.join(orca_params.OUTPUT_PATH, loss_filename)
-    acc_filename = f'orca_accuracy_plot_val_loss_={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.png'
+    acc_filename = f'orca_accuracy_plot_val_loss_={final_val_loss:.4f}_val_acc={final_val_acc:.4f}_{run_timestamp}.png'
     acc_fig_path = os.path.join(orca_params.OUTPUT_PATH, acc_filename)
 
     # generate and save loss plot
@@ -82,18 +85,18 @@ def save_model(model, model_history, run_timestamp='unspecified'):
     """
 
     # extract data from history dict
-    val_loss = model_history.history['val_loss'][-1]
-    val_acc = model_history.history['val_acc'][-1]
+    final_val_loss = model_history.history['val_loss'][-1]
+    final_val_acc = model_history.history['val_acc'][-1]
 
     # save model config
-    json_filename = f'config_val_loss={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.json'
+    json_filename = f'config_val_loss={final_val_loss:.4f}_val_acc={final_val_acc:.4f}_{run_timestamp}.json'
     output_json = os.path.join(
         orca_params.OUTPUT_PATH, json_filename)
     with open(output_json, 'w') as json_file:
         json_file.write(model.to_json())
 
     # save trained model weights
-    weights_filename = f'weights_val_loss={val_loss:.4f}_val_acc={val_acc:.4f}_{run_timestamp}.hdf5'
+    weights_filename = f'weights_val_loss={final_val_loss:.4f}_val_acc={final_val_acc:.4f}_{run_timestamp}.hdf5'
     output_weights = os.path.join(orca_params.OUTPUT_PATH, weights_filename)
     model.save_weights(output_weights)
 
