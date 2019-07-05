@@ -256,11 +256,47 @@ Once in there, open the OrcaDetector folder, install the Python extension on the
 
 ### Training
 
-TBD
+Set the relevant hyperparameters in `orca_params.py`, and then run the training script:
 
-### Testing
+```
+python3 train.py
+```
 
-TBD
+After training has completed, several timestamped files will be written to disk:
+
+- loss plot
+- accuracy plot
+- Keras json config (for documentation only)
+- Model weights (to be used for inference)
+
+There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the trained weights.
+
+> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
+ 
+### Running inference with labeled test set
+
+If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.
+
+```
+python3 inference.py \
+    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+```
+
+In addition to displaying the classification report, it is saved to disk as a json file.  The confusion matrix is not displayed (due to large size of the matrix), but is aved to disk as a csv file.  These can be loaded into a notebook for further analysis.
+
+> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
+ 
+
+### Running inference on unlabeled audio
+
+This is similar to above, with one additional CLI flag:
+
+```
+python3 inference.py \
+    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+    --predict_only    
+```
+
 
 ## 7. Recording from online live feed sources
 
