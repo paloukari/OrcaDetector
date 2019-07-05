@@ -46,11 +46,12 @@ def collect(data_path=orca_params.DATA_PATH):
             output_path = os.path.join(data_path, 'Noise/', stream_name)
             stream_obj = m3u8.load(stream_url)
             # pick a single audio segment from the stream
-            audio_segment = random.choice(stream_obj.segments)
-            base_path = audio_segment.base_uri
-            file_name = audio_segment.uri
-            audio_url = base_path + file_name
-            _save_audio(audio_url, output_path)
+            if len(stream_obj.segments) > 0:
+                audio_segment = random.choice(stream_obj.segments)
+                base_path = audio_segment.base_uri
+                file_name = audio_segment.uri
+                audio_url = base_path + file_name
+                _save_audio(audio_url, output_path)
             
         # sleep for 1-15 minutes
         sleep_sec = np.random.randint(low=60, high=900)
