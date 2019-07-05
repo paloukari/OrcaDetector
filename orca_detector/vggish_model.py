@@ -110,7 +110,7 @@ class VGGish(object):
         """
             Args:
                 load_weights = boolean if weights should be loaded
-                weights = weights to load ('audioset' weights are pre-trained on YouTube-8M).
+                weights = weights to load ('audioset' weights are pre-trained on YouTube-8M').
                 input_tensor = Keras input_layer
                 input_shape = input data shape
                 out_dim = output dimension
@@ -122,11 +122,6 @@ class VGGish(object):
             Returns:
                 A compiled Keras model instance
         """
-
-        # Validate parameters
-        if weights not in {'audioset', None}:
-            raise ValueError(
-                'Only `audioset` weights are currently supported.')
 
         if out_dim is None:
             out_dim = mel_params.EMBEDDING_SIZE  # 128
@@ -171,22 +166,28 @@ class VGGish(object):
 
         # load weights
         if load_weights:
+            # Use audioset weights for initial training
             if weights == 'audioset':
                 if include_top:
-                    print('Weights will be loaded from {}'.format(
+                    print('Loading weights from {}'.format(
                         (orca_params.WEIGHTS_PATH_TOP)))
                     self.model.load_weights(
                         orca_params.WEIGHTS_PATH_TOP, by_name=True)
                 else:
-                    print('Weights will be loaded from {}'.format(
+                    print('Loading weights from {}'.format(
                         (orca_params.WEIGHTS_PATH)))
                     if not os.path.exists(orca_params.WEIGHTS_PATH):
                         raise Exception(
                             'ERROR: cannot find {} to load.'.format((orca_params)))
                     self.model.load_weights(
                         orca_params.WEIGHTS_PATH, by_name=True)
+            # Use our own saved weights for running inference
             else:
-                raise Exception("ERROR: failed to load weights")
+                print(f'Loading weights from {weights}')
+                if not os.path.exists(weights):
+                    raise Exception('ERROR: cannot find {weights}.')
+                self.model.load_weights(weights, by_name=True)
+                
 
         # print representation of the model
         self.model.summary()

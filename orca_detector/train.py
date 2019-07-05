@@ -60,6 +60,7 @@ def run(**params):
                         y=train_labels,
                         validation_data=(validate_features, validate_labels),
                         epochs=orca_params.EPOCHS,
+                        batch_size=orca_params.BATCH_SIZE,
                         verbose=1)
 
     # save loss and accuracy plots to disk
