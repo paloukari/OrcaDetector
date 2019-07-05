@@ -19,9 +19,13 @@ DATA_PATH = '/data/'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
-OTHER_CLASS = 'Other'
+
 # Classification params
-REMOVE_CLASSES = []
+OTHER_CLASS = 'Other'
+REMOVE_CLASSES = ['BowheadWhale', 'Narwhal', 'SpermWhale',
+                  'TucuxiDolphin', 'White_sidedDolphin', 'DallsPorpoise',
+                 'HarpSeal', 'LeopardSeal', 'RibbonSeal',
+                 'RingedSeal', 'SpottedSeal']
 OTHER_CLASSES = []
 
 # Weighting to account for imbalance when calculating loss
@@ -34,5 +38,6 @@ LOSS = 'categorical_crossentropy'
 EPOCHS = 5
 BATCH_SIZE = 128
 
+# Model hyperparameters
 FILE_MAX_SIZE_SECONDS = 10.00
 FILE_SAMPLING_SIZE_SECONDS = 0.98
