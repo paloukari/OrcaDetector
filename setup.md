@@ -304,18 +304,30 @@ We are recording audio samples from the following hydrophone live streams as bac
 
 - [OrcasoundLab](http://live.orcasound.net/orcasound-lab)
 
-The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  From within the `orca_dev` Docker container, type:
+The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  Spin up a separate `orca_dev` Docker container instance:
 
 ```
+sudo docker run \
+    --rm \
+    --name noise_collector \
+    -tid \
+    -v ~/OrcaDetector:/src \
+    -v ~/OrcaDetector/data:/data \
+    orca_dev
+```
+
+Then kick off the process:
+
+```
+sudo docker exec -it noise_collector bash
 cd orca_detector
-nohup python3 noise_collector.py > nohup.out 2>&1 &
+python3 noise_collector.py
 ```
 
-Write down the pid that's displayed when the background job starts, so that you can manually kill it if/when necessary (via `kill -9 <pid>`).
+You can detach from the container (`CTRL-P -> CTRL-Q`) and close your machine.  The script will keep running.  To re-attach:
 
-Then you should be able to monitor the output:
 ```
-tail -f nohup.out
+docker attach noise_collector
 ```
 
 
