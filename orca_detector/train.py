@@ -53,6 +53,11 @@ def run(**params):
     encoder = create_label_encoding(list(classes))
     train_labels = encode_labels(train_labels, encoder)
     validate_labels = encode_labels(validate_labels, encoder)
+    print(f'\nTraining to detect the following classes:\n{encoder.classes_}')
+    print(f'Removed the following classes:\n{orca_params.REMOVE_CLASSES}')
+    print(f'Mapped the following classes to "{orca_params.OTHER_CLASS}":\n' \
+          f'{orca_params.OTHER_CLASSES}\n')
+    
 
     model = create_network(classes)
 
