@@ -13,10 +13,11 @@ import os
 import random
 import time
 import uuid
+import urllib.request
 
-# Dictionary of streams we're recording from
-streams = {'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab/hls/1562344334/live.m3u8',
-           'BushPoint': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_bush_point/hls/1562351419/live.m3u8'}
+# Dictionary of stream base URLs; used in building stream links
+stream_bases = {'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab',
+                'BushPoint': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_bush_point'}
 
 def _save_audio(audio_url, output_path):
     """
@@ -42,7 +43,12 @@ def collect(data_path=orca_params.DATA_PATH):
     """
     
     while True:
-        for stream_name, stream_url in streams.items():
+
+        for stream_name, stream_base in stream_bases.items():
+            # get the ID of the latest stream and build URL to load
+            latest = f'{stream_base}/latest.txt'
+            stream_id = urllib.request.urlopen(latest).read().decode("utf-8").replace('\n','') 
+            stream_url = f'{stream_base}/hls/{stream_id}/live.m3u8'
             output_path = os.path.join(data_path, 'Noise/', stream_name)
             stream_obj = m3u8.load(stream_url)
             # pick a single audio segment from the stream
