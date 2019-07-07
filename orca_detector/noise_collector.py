@@ -45,19 +45,22 @@ def collect(data_path=orca_params.DATA_PATH):
     while True:
 
         for stream_name, stream_base in stream_bases.items():
-            # get the ID of the latest stream and build URL to load
-            latest = f'{stream_base}/latest.txt'
-            stream_id = urllib.request.urlopen(latest).read().decode("utf-8").replace('\n','') 
-            stream_url = f'{stream_base}/hls/{stream_id}/live.m3u8'
-            output_path = os.path.join(data_path, 'Noise/', stream_name)
-            stream_obj = m3u8.load(stream_url)
-            # pick a single audio segment from the stream
-            if len(stream_obj.segments) > 0:
-                audio_segment = random.choice(stream_obj.segments)
-                base_path = audio_segment.base_uri
-                file_name = audio_segment.uri
-                audio_url = base_path + file_name
-                _save_audio(audio_url, output_path)
+            try:
+                # get the ID of the latest stream and build URL to load
+                latest = f'{stream_base}/latest.txt'
+                stream_id = urllib.request.urlopen(latest).read().decode("utf-8").replace('\n','') 
+                stream_url = f'{stream_base}/hls/{stream_id}/live.m3u8'
+                output_path = os.path.join(data_path, 'Noise/', stream_name)
+                stream_obj = m3u8.load(stream_url)
+                # pick a single audio segment from the stream
+                if len(stream_obj.segments) > 0:
+                    audio_segment = random.choice(stream_obj.segments)
+                    base_path = audio_segment.base_uri
+                    file_name = audio_segment.uri
+                    audio_url = base_path + file_name
+                    _save_audio(audio_url, output_path)
+            except:
+                print(f'Unable to load stream from {stream_url}')
             
         # sleep for 1-15 minutes
         sleep_sec = np.random.randint(low=60, high=900)
