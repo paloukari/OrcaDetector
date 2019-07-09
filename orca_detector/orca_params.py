@@ -47,11 +47,12 @@ REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
 
 # Weighting to account for imbalance when calculating loss
 OPTIMIZER = 'sgd'
+LEARNING_RATE = 0.001  # SGD default LR=0.01
 LOSS = 'categorical_crossentropy'
 
 # Model training
-EPOCHS = 10
-BATCH_SIZE = 128
+EPOCHS = 30
+BATCH_SIZE = 64
 
 # Model hyperparameters
 FILE_MAX_SIZE_SECONDS = 10.00

@@ -18,6 +18,7 @@ from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, \
     Dropout
 from keras.engine.topology import get_source_inputs
 from keras import backend as K
+from keras import optimizers
 
 # project-specific imports
 import mel_params
@@ -106,6 +107,7 @@ class VGGish(object):
                  include_top=True,
                  pooling='avg',
                  optimizer='adam',
+                 lr=0.001,  # default for Adam
                  loss='categorical_crossentropy',
                  dropout=0.,
                  model_name='VGGish'):
@@ -195,13 +197,21 @@ class VGGish(object):
         # print representation of the model
         self.model.summary()
 
+        # instantiate optimizer
+        if optimizer == 'sgd':
+            optimizer_obj = optimizers.SGD(lr=lr)
+        elif optimizer == 'adam':
+            optimizer_obj = optimizers.Adam(lr=lr)
+        else:
+            # Fallback to default params for others
+            optimizer_obj = optimizers.get(optimizer)
+
         # Build and compile the model
-        # TODO: consider specifying loss_weights to help with class imbalance
-        self.model.compile(optimizer=optimizer,
+        self.model.compile(optimizer=optimizer_obj,
                            loss=loss,
                            metrics=['accuracy'])
-        print('Compiled {} model with {} optimizer and {} loss.'.format(
-            (model_name), (optimizer), (loss)))
+        print('Compiled {} model with {} optimizer (lr={}) and {} loss.'.format(
+            (model_name), (optimizer), (lr), (loss)))
 
     def get_model(self):
         """ Returns a compiled Keras model."""
@@ -247,6 +257,7 @@ class OrcaVGGish(VGGish):
                  out_dim=None,
                  pooling='avg',
                  optimizer=orca_params.OPTIMIZER,
+                 lr=orca_params.LEARNING_RATE,
                  loss=orca_params.LOSS,
                  dropout=orca_params.DROPOUT,
                  model_name='OrcaVGGish'):
@@ -275,6 +286,7 @@ class OrcaVGGish(VGGish):
                          include_top=False,
                          pooling=pooling,
                          optimizer=optimizer,
+                         lr=lr,
                          loss=loss,
                          dropout=dropout,
                          model_name=model_name)
