@@ -51,7 +51,8 @@ def _label_files(data_path=orca_params.DATA_PATH):
             continue  # try next folder
 
         # extract folder names as labels from a path that looks like:
-        #   /data/MarineMammalName/1975
+        #   /data/MarineMammalName/1975 or
+        #   /data/Noise/BushPoint
         path, year_folder = os.path.split(dirpath)
         _, label = os.path.split(path)
         # strip non alphanumeric characters

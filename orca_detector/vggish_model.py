@@ -14,7 +14,8 @@ import sys
 
 from keras.models import Model
 from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, \
-    GlobalAveragePooling2D, GlobalMaxPooling2D, BatchNormalization
+    GlobalAveragePooling2D, GlobalMaxPooling2D, BatchNormalization, \
+    Dropout
 from keras.engine.topology import get_source_inputs
 from keras import backend as K
 
@@ -106,6 +107,7 @@ class VGGish(object):
                  pooling='avg',
                  optimizer='adam',
                  loss='categorical_crossentropy',
+                 dropout=0.,
                  model_name='VGGish'):
         """
             Args:
@@ -144,6 +146,7 @@ class VGGish(object):
         self.audio_input = audio_input
 
         self.pooling = pooling
+        self.dropout = dropout
 
         # Build model.  Subclasses should implement the custom_top_layers() method
         # and optionally, the custom_preprocessing_layers() method.
@@ -222,6 +225,9 @@ class OrcaVGGish(VGGish):
             Top layers for OrcaDetector classification.
         """
 
+        # Dropout to prevent overfitting
+        self.x = Dropout(self.dropout)(self.x)
+
         # FC block
         self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
                               name='orca_pool4')(self.x)
@@ -242,6 +248,7 @@ class OrcaVGGish(VGGish):
                  pooling='avg',
                  optimizer=orca_params.OPTIMIZER,
                  loss=orca_params.LOSS,
+                 dropout=orca_params.DROPOUT,
                  model_name='OrcaVGGish'):
         """
             Args:
@@ -269,6 +276,7 @@ class OrcaVGGish(VGGish):
                          pooling=pooling,
                          optimizer=optimizer,
                          loss=loss,
+                         dropout=dropout,
                          model_name=model_name)
 
     def get_model(self):
