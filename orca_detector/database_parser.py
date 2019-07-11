@@ -6,6 +6,7 @@ File to parse and label datafiles for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
+import argparse
 import numpy as np
 import mel_params
 import orca_params
@@ -417,5 +418,17 @@ def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
 
 
 if __name__ == '__main__':
-    read_files_and_extract_features()
+    # parse command line parameters and flags
+    parser = argparse.ArgumentParser(description='OrcaDetector - W251 (Summer 2019)',
+                        epilog='by Spyros Garyfallos, Ram Iyer, Mike Winton')
+    parser.add_argument('--overwrite', action='store_true',
+                        help = 'Regenerate features, overwriting any existing feature files.')
+    args = parser.parse_args()
+    
+    if args.overwrite:
+        overwrite = True
+    else:
+        overwrite = False
+
+    read_files_and_extract_features(overwrite=overwrite)
     print('Done extracting features!')
