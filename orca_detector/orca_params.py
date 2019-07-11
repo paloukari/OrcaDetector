@@ -45,16 +45,20 @@ REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
                   'TucuxiDolphin'  # 12 training samples
                  ]
 
-# Weighting to account for imbalance when calculating loss
-OPTIMIZER = 'adam'
-LEARNING_RATE = 0.0001  # SGD default LR=0.01; Adam default LR=0.001
 LOSS = 'categorical_crossentropy'
-
-# Model training
-EPOCHS = 30
+EPOCHS = 20
 BATCH_SIZE = 64
 
-# Model hyperparameters
+# Model training - VGGish params
+OPTIMIZER = 'adam'
+LEARNING_RATE = 0.001  # SGD default LR=0.01; Adam default LR=0.001
+DROPOUT = 0.4
+L2_REG_RATE = 0.01  # used for all Dense and Conv2D layers
+
+# Model training - LogReg params
+LOGREG_OPTIMIZER = 'adam'
+LOGREG_LEARNING_RATE = 0.005
+
+# Mel spectrogram hyperparameters
 FILE_MAX_SIZE_SECONDS = 10.00
 FILE_SAMPLING_SIZE_SECONDS = 0.98
-DROPOUT = 0.4

@@ -17,6 +17,7 @@ from keras.layers import Flatten, Dense, Input, Conv2D, MaxPooling2D, \
     GlobalAveragePooling2D, GlobalMaxPooling2D, BatchNormalization, \
     Dropout
 from keras.engine.topology import get_source_inputs
+from keras.regularizers import l2
 from keras import backend as K
 from keras import optimizers
 
@@ -46,29 +47,35 @@ class VGGish(object):
         """
 
         # Block 1
-        self.x = Conv2D(64, (3, 3), strides=(1, 1), activation='relu',
+        self.x = Conv2D(64, (3, 3), kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                        strides=(1, 1), activation='relu',
                         padding='same', name='conv1')(self.x)
         self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
                               name='pool1')(self.x)
 
         # Block 2
-        self.x = Conv2D(128, (3, 3), strides=(1, 1), activation='relu',
+        self.x = Conv2D(128, (3, 3), kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                        strides=(1, 1), activation='relu',
                         padding='same', name='conv2')(self.x)
         self.x = MaxPooling2D((2, 2), strides=(2, 2),
                               padding='same', name='pool2')(self.x)
 
         # Block 3
-        self.x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu',
+        self.x = Conv2D(256, (3, 3), kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                        strides=(1, 1), activation='relu',
                         padding='same', name='conv3/conv3_1')(self.x)
-        self.x = Conv2D(256, (3, 3), strides=(1, 1), activation='relu',
+        self.x = Conv2D(256, (3, 3), kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                        strides=(1, 1), activation='relu',
                         padding='same', name='conv3/conv3_2')(self.x)
-        self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
-                              name='pool3')(self.x)
+        self.x = MaxPooling2D((2, 2), strides=(2, 2),
+                              padding='same', name='pool3')(self.x)
 
         # Block 4
-        self.x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu',
+        self.x = Conv2D(512, (3, 3), kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                        strides=(1, 1), activation='relu',
                         padding='same', name='conv4/conv4_1')(self.x)
-        self.x = Conv2D(512, (3, 3), strides=(1, 1), activation='relu',
+        self.x = Conv2D(512, (3, 3), kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                        strides=(1, 1), activation='relu',
                         padding='same', name='conv4/conv4_2')(self.x)
 
     def _build_vggish_top_layers(self):
@@ -236,15 +243,15 @@ class OrcaVGGish(VGGish):
         """
 
         # Dropout to prevent overfitting
-        self.x = Dropout(self.dropout)(self.x)
+        self.x = Dropout(self.dropout, name='orca_dropout')(self.x)
 
         # FC block
         self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
                               name='orca_pool4')(self.x)
-        self.x = Flatten(name='orca_flatten_')(self.x)
-        self.x = Dense(4096, activation='relu',
+        self.x = Flatten(name='orca_flatten')(self.x)
+        self.x = Dense(256, kernel_regularizer=l2(orca_params.L2_REG_RATE), activation='relu',
                        name='orca_fc1/orca_fc1_1')(self.x)
-        self.x = Dense(4096, activation='relu',
+        self.x = Dense(256, kernel_regularizer=l2(orca_params.L2_REG_RATE), activation='relu',
                        name='orca_fc1/orca_fc1_2')(self.x)
         self.x = Dense(self.out_dim, activation='softmax',
                        name='orca_softmax')(self.x)
