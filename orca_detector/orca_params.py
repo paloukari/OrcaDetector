@@ -22,22 +22,39 @@ WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
 
 # Classification params
 OTHER_CLASS = 'Other'
-REMOVE_CLASSES = ['BowheadWhale', 'Narwhal', 'SpermWhale',
-                  'TucuxiDolphin', 'White_sidedDolphin', 'DallsPorpoise',
-                 'HarpSeal', 'LeopardSeal', 'RibbonSeal',
-                 'RingedSeal', 'SpottedSeal']
 OTHER_CLASSES = []
+REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
+                  'BlueWhale',  # 3 training samples
+                  'CommersonsDolphin',  # 1 training sample
+                  'FinlessPorpoise',  # 2 training samples
+                  'GraySeal',  # 7 training samples
+                  'HarbourSeal',  # 1 training sample
+                  'HeavisidesDolphin',  # 14 training samples
+                  'HoodedSeal',  # 2 training samples
+                  'IrawaddyDolphin',  # 5 training samples
+                  'JuanFernandezFurSeal',  # 4 training samples
+                  'LeopardSeal',  # (NEED TO UNDERSTAND)
+                  'MinkeWhale',  # 24 training samples
+                  'NewZealandFurSeal',  # 2 training samples
+                  'RibbonSeal',  # 45 training samples
+                  'RingedSeal',  # 46 training samples
+                  'SeaOtter',  # 2 training samples
+                  'Short_FinnedPacificPilotWhale',  # (NEED TO UNDERSTAND)
+                  'SpottedSeal',  # 22 training samples
+                  'StellerSeaLion',  # 6 training samples
+                  'TucuxiDolphin'  # 12 training samples
+                 ]
 
 # Weighting to account for imbalance when calculating loss
-# TODO: update weights based on observed balance
-# CLASS_WEIGHTS = {0: 1., 1: 1., 2: 1.}
-OPTIMIZER = 'sgd'
+OPTIMIZER = 'adam'
+LEARNING_RATE = 0.0001  # SGD default LR=0.01; Adam default LR=0.001
 LOSS = 'categorical_crossentropy'
 
 # Model training
-EPOCHS = 5
-BATCH_SIZE = 128
+EPOCHS = 30
+BATCH_SIZE = 64
 
 # Model hyperparameters
 FILE_MAX_SIZE_SECONDS = 10.00
 FILE_SAMPLING_SIZE_SECONDS = 0.98
+DROPOUT = 0.4
