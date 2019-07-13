@@ -16,6 +16,7 @@ class DatasetType(IntEnum):
 
 # Paths to key volumes mapped into the Docker container
 DATA_PATH = '/data/'
+LIVE_FEED = '/data/live_feed/'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
@@ -60,5 +61,6 @@ FILE_SAMPLING_SIZE_SECONDS = 0.98
 DROPOUT = 0.4
 
 #live feed listener
-LIVE_FEED_SLEEP_SEGMENT_SECONDS = 10
+LIVE_FEED_SEGMENT_SECONDS = 1
 LIVE_FEED_SLEEP_SECONDS = 0
+LIVE_FEED_ITERATION_SECONDS = 10
