@@ -7,8 +7,8 @@ import sys
 
 from live_feed_listener import live_feed_inference
 from database_parser import read_files_and_extract_features
-#from training import train
-#from inference import infer
+from training import train
+from inference import infer
 #from vggish_model import test_VGGish_model
 #from logreg_model import test_logistic_regression_model
 
@@ -24,8 +24,8 @@ def main(args=None):
 if __name__ == "__main__":
 
     main.add_command(read_files_and_extract_features, name="features")
-    #main.add_command(train)
-    #main.add_command(infer)
+    main.add_command(train)
+    main.add_command(infer)
     main.add_command(live_feed_inference, name="infer-live")
     #main.add_command(test_VGGish_model, name="test-VGGish")
     #main.add_command(test_logistic_regression_model, name="test-LR")

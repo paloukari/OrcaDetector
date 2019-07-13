@@ -20,7 +20,8 @@ class DatasetType(IntEnum):
 
 # Paths to key volumes mapped into the Docker container
 DATA_PATH = '/data/'
-LIVE_FEED = '/data/live_feed/'
+LIVE_FEED_PATH = '/data/live_feed/'
+POSITIVE_SAMPLES_PATH = '/data/positive_samples/'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'

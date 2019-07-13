@@ -25,20 +25,27 @@ def _save_audio_segments(stream_url,
                          stream_name,
                          segment_seconds,
                          iteration_seconds,
+                         mix_with,
                          output_path,
                          verbose):
     """
     Uses ffmpeg (via CLI) to retrieve audio segments from audio_url
     and saves it to the local output_path.
+
+    If mix_with exists, it mixes this file with the live feed source.
+    The result 
     """
 
     file_name = f"{stream_name}_%02d.wav"
     output_file = os.path.join(output_path, file_name)
-    print(f'Saving audio segments: {stream_url}')
-    print(f' to {output_file}')
+    mix_with = ''
 
-    ffmpeg_cli = 'ffmpeg -y -i {} -t {} -f segment -segment_time {} {}'.format(
-        (stream_url), (iteration_seconds), (segment_seconds), (output_file))
+    if os.path.exists(mix_with):
+        mix_with = '-i {} -filter_complex amix=inputs=2:duration=first'.format(
+            (mix_with))
+
+    ffmpeg_cli = 'ffmpeg -y -i {} {} -t {} -f segment -segment_time {} {}'.format(
+        (stream_url), (mix_with), (iteration_seconds), (segment_seconds), (output_file))
 
     if not verbose:
         ffmpeg_cli = ffmpeg_cli + ' -loglevel warning'
@@ -54,15 +61,17 @@ def _perform_inference(inference_output_path):
     To simulate an orca, drop some positive 1 second samples in the folder.
     """
     try:
-        audio_segments = glob.glob(os.path.join(inference_output_path, '*.wav'))
+        audio_segments = glob.glob(
+            os.path.join(inference_output_path, '*.wav'))
         end_of_segment = int(
             orca_params.FILE_SAMPLING_SIZE_SECONDS*orca_params.LIVE_FEED_SAMPLING_RATE)
-        
+
         # The features extraction should not take more than 3 seconds for 3*10 1 second segments
         features = [[segment, extract_segment_features('{}:0:{}'.format(
             (segment), (end_of_segment)))] for segment in audio_segments]
 
-        print(f'Performing inference for {len(audio_segments)} audio segments')
+        print('Performing inference for {} audio segments'.format(
+            (len(audio_segments))))
 
         # TODO: Perform the inteference here and measure the time duration.
 
@@ -98,7 +107,8 @@ def live_feed_inference(stream_name,
                         sleep_seconds,
                         iteration_seconds,
                         verbose,
-                        live_feed_path=orca_params.LIVE_FEED):
+                        live_feed_path=orca_params.LIVE_FEED_PATH,
+                        positive_samples_path=orca_params.POSITIVE_SAMPLES_PATH):
     """
     Connects to specified audio stream(s) in the `ORCASOUND_STREAMS` dictionary, and records audio segments in iterations 
     and performs inference on the recorded data.
@@ -111,12 +121,24 @@ def live_feed_inference(stream_name,
     The loop never ends, so to exit, press CTRL-C or kill the process.
     The iterations are required because the latest feed URI will change over time and needs to
     be recalcuated.
+
+    In each iteration, a single positive sample file is selected, if any, and mixed with the live sources
+    to simulate a positive signal. The file is deleted after usage.
     """
 
     counter = 0
+    
     while True:
+        positive_sample = ''
+        positive_samples = glob.glob(
+        os.path.join(positive_samples_path, '*.wav'))
+
+        if len(positive_samples) > 0:
+            positive_sample = positive_samples[0]
+
         counter = counter + 1
         threads = []
+
         for _stream_name, _stream_base in orca_params.ORCASOUND_STREAMS.items():
             if stream_name != 'All' and stream_name != _stream_name:
                 continue
@@ -135,15 +157,18 @@ def live_feed_inference(stream_name,
                     live_feed_path, str((counter+1) % 2))
 
                 # make sure the folders exist
-
                 if not os.path.exists(recording_output_path):
                     os.mkdir(recording_output_path)
                 if not os.path.exists(inference_output_path):
                     os.mkdir(inference_output_path)
 
-                thread = Thread(target=_save_audio_segments, args=(stream_url, _stream_name,
-                                                                   segment_seconds, iteration_seconds,
-                                                                   recording_output_path, verbose, ))
+                thread = Thread(target=_save_audio_segments, args=(stream_url,
+                                                                   _stream_name,
+                                                                   segment_seconds,
+                                                                   iteration_seconds,
+                                                                   positive_sample,
+                                                                   recording_output_path,
+                                                                   verbose, ))
                 threads.append(thread)
                 thread.start()
             except:
@@ -152,6 +177,10 @@ def live_feed_inference(stream_name,
         _perform_inference(inference_output_path)
 
         _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
+
+        if os.path.exists(positive_sample):
+            os.remove(positive_sample)
+            print(f'{positive_sample} deleted.')
 
         if sleep_seconds > 0:
             print(
