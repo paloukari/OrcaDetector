@@ -46,19 +46,29 @@ def _save_audio_segments(stream_url,
 
 
 def _perform_inference(inference_output_path):
-    audio_segments = glob.glob(os.path.join(inference_output_path, '*.wav'))
-    end_of_segment = int(
-        orca_params.FILE_SAMPLING_SIZE_SECONDS*orca_params.LIVE_FEED_SAMPLING_RATE)
-    
-    # The features extraction should not take more than 3 seconds for 3*10 1 second segments
-    features = [[segment, extract_segment_features('{}:0:{}'.format(
-        (segment), (end_of_segment)))] for segment in audio_segments]
+    """
+    Reads all *.wav audio segments in the specified folder, extracts the features
+    performs inference and finally deletes the files. The files will be either 
+    way overwritten by ffmpeg in the next iteration.
 
-    print(f'Performing inference for {len(audio_segments)} audio segments')
+    To simulate an orca, drop some positive 1 second samples in the folder.
+    """
+    try:
+        audio_segments = glob.glob(os.path.join(inference_output_path, '*.wav'))
+        end_of_segment = int(
+            orca_params.FILE_SAMPLING_SIZE_SECONDS*orca_params.LIVE_FEED_SAMPLING_RATE)
+        
+        # The features extraction should not take more than 3 seconds for 3*10 1 second segments
+        features = [[segment, extract_segment_features('{}:0:{}'.format(
+            (segment), (end_of_segment)))] for segment in audio_segments]
 
-    # TODO: Perform the inteference here and measure the time duration.
+        print(f'Performing inference for {len(audio_segments)} audio segments')
 
-    shutil.rmtree(inference_output_path)
+        # TODO: Perform the inteference here and measure the time duration.
+
+        shutil.rmtree(inference_output_path)
+    except:
+        print(f'Unable to perform inference for {inference_output_path}')
 
 @click.command(help="Performs inference on the specified OrcaSound Live Feed source(s).",
                epilog=orca_params.EPILOGUE)
