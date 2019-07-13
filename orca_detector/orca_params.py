@@ -48,11 +48,14 @@ REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
 LOSS = 'categorical_crossentropy'
 EPOCHS = 20
 BATCH_SIZE = 64
+MODEL_NAMES = ['vggish', 'logreg']
+DEFAULT_MODEL_NAME = 'vggish'
 
 # Model training - VGGish params
 OPTIMIZER = 'adam'
 LEARNING_RATE = 0.001  # SGD default LR=0.01; Adam default LR=0.001
 DROPOUT = 0.4
+FINAL_DENSE_NODES = 256
 L2_REG_RATE = 0.01  # used for all Dense and Conv2D layers
 
 # Model training - LogReg params

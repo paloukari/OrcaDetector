@@ -32,17 +32,17 @@ def create_network(model_name, classes):
     """
 
     if model_name == 'vggish':
-        sound_extractor = OrcaVGGish(load_weights=True,
-                                     weights='audioset',
-                                     out_dim=len(classes),
-                                     pooling='avg').get_model()
+        model = OrcaVGGish(load_weights=True,
+                           weights='audioset',
+                           out_dim=len(classes),
+                           pooling='avg').get_model()
     elif model_name == 'logreg':
-        sound_extractor = OrcaLogReg(load_weights=False,
-                                     out_dim=len(classes)).get_model()
+        model = OrcaLogReg(load_weights=False,
+                           out_dim=len(classes)).get_model()
     else:
         raise Exception('No model specified.  Use `--model_name` arg.')
         
-    return sound_extractor
+    return model
 
 
 def run(model_name, **params):
@@ -94,12 +94,12 @@ if __name__ == '__main__':
                         epilog='by Spyros Garyfallos, Ram Iyer, Mike Winton')
     parser.add_argument('--model_name',
                         type=str.lower,
-                        choices=['vggish', 'logreg'],
+                        choices=orca_params.MODEL_NAMES,
                         help='Specify the model name to use.')
     args = parser.parse_args()
     
     if not args.model_name:
-        model_name = 'vggish'
+        model_name = orca_params.DEFAULT_MODEL_NAME
     else:
         model_name = args.model_name
 

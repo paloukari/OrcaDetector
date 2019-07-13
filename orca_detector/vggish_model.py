@@ -249,9 +249,13 @@ class OrcaVGGish(VGGish):
         self.x = MaxPooling2D((2, 2), strides=(2, 2), padding='same',
                               name='orca_pool4')(self.x)
         self.x = Flatten(name='orca_flatten')(self.x)
-        self.x = Dense(256, kernel_regularizer=l2(orca_params.L2_REG_RATE), activation='relu',
+        self.x = Dense(orca_params.FINAL_DENSE_NODES,
+                       kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                       activation='relu',
                        name='orca_fc1/orca_fc1_1')(self.x)
-        self.x = Dense(256, kernel_regularizer=l2(orca_params.L2_REG_RATE), activation='relu',
+        self.x = Dense(orca_params.FINAL_DENSE_NODES,
+                       kernel_regularizer=l2(orca_params.L2_REG_RATE),
+                       activation='relu',
                        name='orca_fc1/orca_fc1_2')(self.x)
         self.x = Dense(self.out_dim, activation='softmax',
                        name='orca_softmax')(self.x)
