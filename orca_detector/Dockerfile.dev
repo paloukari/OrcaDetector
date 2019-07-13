@@ -15,7 +15,8 @@ RUN apt-get update && \
     apt-get install -y python3-pil && \
     apt-get install -y libsndfile1 && \
     apt-get install -y ffmpeg && \
-    apt-get install -y wget
+    apt-get install -y wget &&\
+    apt-get install -y libportaudio2
 
 # Update pip
 RUN pip install --upgrade pip
