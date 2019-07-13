@@ -204,9 +204,9 @@ def _waveform_to_mel_spectrogram_segments(data, sample_rate):
 
     # Convert to mono if necessary.
     if len(data.shape) > 1:
-        print(f'DEBUG: audio channels before={data.shape}')
+        #print(f'DEBUG: audio channels before={data.shape}')
         data = np.mean(data, axis=1)
-        print(f'DEBUG: audio channels after={data.shape}')
+        #print(f'DEBUG: audio channels after={data.shape}')
 
     # Resample to the rate assumed by VGGish.
     if sample_rate != mel_params.SAMPLE_RATE:
@@ -242,7 +242,7 @@ def _waveform_to_mel_spectrogram_segments(data, sample_rate):
     return log_mel_examples
 
 
-def _extract_segment_features(segment):
+def extract_segment_features(segment):
     """
         Generates the features for the given audio sample segment.
 
@@ -293,7 +293,7 @@ def _extract_and_save_features(dataset,
         # display progress udpates
         if index % 500 == 0:
             print(f'{100*index/len(dataset):.2f}%')
-        features = _extract_segment_features(segment[1])
+        features = extract_segment_features(segment[1])
         data.append([segment[0], features])
 
     _backup_datafile(filename)

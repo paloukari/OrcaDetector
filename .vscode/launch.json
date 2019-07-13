@@ -12,7 +12,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/orca_detector/cli.py",
-            "args": ["features"],
+            "args": ["infer-live"],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/orca_detector/", 
         },

@@ -77,9 +77,14 @@ LIVE_FEED_SEGMENT_SECONDS = 1
 LIVE_FEED_SLEEP_SECONDS = 0
 LIVE_FEED_ITERATION_SECONDS = 10
 
+# TODO: Verify this is fixed to this value
+LIVE_FEED_SAMPLING_RATE = 48000
+
 # Dictionary of stream base URLs; used in building stream links
 ORCASOUND_STREAMS = {
     'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab',
     'BushPoint': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_bush_point',
     'PortTownsend': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_port_townsend'
 }
+
+ORCASOUND_STREAMS_NAMES = list(ORCASOUND_STREAMS.keys()) + ['All']
