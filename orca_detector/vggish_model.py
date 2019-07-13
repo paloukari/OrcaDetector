@@ -7,7 +7,7 @@ W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 
 Adapted from https://github.com/DTaoo/VGGish
 """
-
+import click
 import numpy as np
 import os
 import sys
@@ -306,9 +306,9 @@ class OrcaVGGish(VGGish):
         """ Returns a compiled Keras model."""
         return self.model
 
-
-if __name__ == '__main__':
-
+@click.command(help="Simple example to confirm if weights can be loaded.",
+               epilog=orca_params.EPILOGUE)
+def test_VGGish_model():
     """
     Simple example to confirm if weights can be loaded.
     """

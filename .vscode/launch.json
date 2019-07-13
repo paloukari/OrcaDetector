@@ -8,12 +8,13 @@
         
         
         {
-            "name": "Python: train.py",
+            "name": "Python: Orca CLI",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/orca_detector/live_feed_listener.py",
+            "program": "${workspaceFolder}/orca_detector/cli.py",
+            "args": ["features"],
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/orca_detector/"
+            "cwd": "${workspaceFolder}/orca_detector/", 
         },
         {
             "name": "Python: Current File",

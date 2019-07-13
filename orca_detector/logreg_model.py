@@ -5,7 +5,7 @@ Basic LogisticRegression model for audio classification
 
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
-
+import click
 import numpy as np
 import os
 import sys
@@ -97,11 +97,11 @@ class OrcaLogReg(object):
         """ Returns a compiled Keras model."""
         return self.model
 
-
-if __name__ == '__main__':
-
+@click.command(help="Simple example to confirm if Logistic Regession model can loaded.",
+               epilog=orca_params.EPILOGUE)
+def test_logistic_regression_model():
     """
-    Simple example to confirm if weights can be loaded.
+    Simple example to confirm if Logistic Regession model can loaded.
     """
     print('Loading OrcaLogReg model:')
     sound_extractor = OrcaLogReg(load_weights=False).get_model()

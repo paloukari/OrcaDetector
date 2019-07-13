@@ -6,7 +6,7 @@ Main file to train a model for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
-import argparse
+import click
 import datetime
 import orca_params
 import os
@@ -44,8 +44,14 @@ def create_network(model_name, classes):
         
     return model
 
-
-def run(model_name, **params):
+@click.command(help="Trains the Orca Detector model.",
+               epilog=orca_params.EPILOGUE)
+@click.option('--model-name',
+              help='Specify the model name to use.',
+              default=orca_params.DEFAULT_MODEL_NAME,
+              show_default=True,
+              type=click.Choice(orca_params.MODEL_NAMES))
+def train(model_name):
 
     print(f'TensorFlow version: {tf.VERSION}')
     print(f'Keras version: {tf.keras.__version__}')
@@ -86,21 +92,3 @@ def run(model_name, **params):
     json_path, weights_path = save_model(model, history, RUN_TIMESTAMP)
     print(f'Saved json config -> {json_path}')
     print(f'Saved weights -> {weights_path}')
-
-
-if __name__ == '__main__':
-    # parse command line parameters and flags
-    parser = argparse.ArgumentParser(description='OrcaDetector - W251 (Summer 2019)',
-                        epilog='by Spyros Garyfallos, Ram Iyer, Mike Winton')
-    parser.add_argument('--model_name',
-                        type=str.lower,
-                        choices=orca_params.MODEL_NAMES,
-                        help='Specify the model name to use.')
-    args = parser.parse_args()
-    
-    if not args.model_name:
-        model_name = orca_params.DEFAULT_MODEL_NAME
-    else:
-        model_name = args.model_name
-
-    run(model_name)

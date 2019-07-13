@@ -6,6 +6,10 @@ W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 
 from enum import IntEnum
 
+# Click text
+
+EPILOGUE = 'by Spyros Garyfallos, Ram Iyer, Mike Winton'
+
 
 class DatasetType(IntEnum):
     """ Enumeration with the possible dataset types. """
@@ -72,3 +76,10 @@ DROPOUT = 0.4
 LIVE_FEED_SEGMENT_SECONDS = 1
 LIVE_FEED_SLEEP_SECONDS = 0
 LIVE_FEED_ITERATION_SECONDS = 10
+
+# Dictionary of stream base URLs; used in building stream links
+ORCASOUND_STREAMS = {
+    'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab',
+    'BushPoint': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_bush_point',
+    'PortTownsend': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_port_townsend'
+}

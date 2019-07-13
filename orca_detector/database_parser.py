@@ -6,7 +6,7 @@ File to parse and label datafiles for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
-import argparse
+import click
 import numpy as np
 import mel_params
 import orca_params
@@ -303,52 +303,6 @@ def _extract_and_save_features(dataset,
     print(f'Saved features of dataset {dataset_type.name}')
 
 
-def read_files_and_extract_features(data_path=orca_params.DATA_PATH,
-                                    train_percentage=.70,
-                                    validate_percentage=0.20,
-                                    overwrite=False):
-    """
-        Index files and create a train/val/test split.  Note that label one-hot
-        encoding is *not* done at this point, nor are undesired classes converted
-        to "Other".  That is done when loading the dataset.
-    """
-
-    if not overwrite:
-        # check if all of the features files exist, and if so return.
-        files_exist = True
-        for d in orca_params.DatasetType:
-            if not os.path.exists(os.path.join(data_path, d.name+'.features')):
-                files_exist = False
-                break
-        if files_exist:
-            return
-        
-    all_samples = _label_files(data_path=orca_params.DATA_PATH)
-
-    datasets = {orca_params.DatasetType.TRAIN: defaultdict(list),
-                orca_params.DatasetType.VALIDATE: defaultdict(list),
-                orca_params.DatasetType.TEST: defaultdict(list)}
-
-    # do a stratified train/val/test split
-    for label, files in all_samples.items():
-        if len(files) < 10:
-            continue  # don't bother to shuffle
-        random.shuffle(files)
-        num_train_files = int((len(files) + 1) * train_percentage)
-        num_validate_files = int((len(files) + 1) * validate_percentage)
-        datasets[orca_params.DatasetType.TRAIN][label] = \
-            files[: num_train_files]
-        datasets[orca_params.DatasetType.VALIDATE][label] = \
-            files[num_train_files: num_train_files + num_validate_files]
-        datasets[orca_params.DatasetType.TEST][label] = \
-            files[num_train_files + num_validate_files:]
-
-    # quantize and flatten each dataset
-    for dataset_type, contents in datasets.items():
-        flattened_dataset = _flatten_and_quantize_dataset(contents)
-        _extract_and_save_features(flattened_dataset,
-                                   data_path,
-                                   dataset_type)
 
 
 def load_features(data_path=orca_params.DATA_PATH,
@@ -418,18 +372,58 @@ def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
     return encoder
 
 
-if __name__ == '__main__':
-    # parse command line parameters and flags
-    parser = argparse.ArgumentParser(description='OrcaDetector - W251 (Summer 2019)',
-                        epilog='by Spyros Garyfallos, Ram Iyer, Mike Winton')
-    parser.add_argument('--overwrite', action='store_true',
-                        help = 'Regenerate features, overwriting any existing feature files.')
-    args = parser.parse_args()
     
-    if args.overwrite:
-        overwrite = True
-    else:
-        overwrite = False
+@click.command(help="Indexes files and creates a train/val/test split.",
+               epilog=orca_params.EPILOGUE)
+@click.option('--overwrite',
+              help='Regenerate features, overwriting any existing feature files.',
+              default=False,
+              show_default=False)
+def read_files_and_extract_features(overwrite, 
+                                    data_path=orca_params.DATA_PATH,
+                                    train_percentage=.70,
+                                    validate_percentage=0.20):
+    """
+        Index files and create a train/val/test split.  Note that label one-hot
+        encoding is *not* done at this point, nor are undesired classes converted
+        to "Other".  That is done when loading the dataset.
+    """
 
-    read_files_and_extract_features(overwrite=overwrite)
+    if not overwrite:
+        # check if all of the features files exist, and if so return.
+        files_exist = True
+        for d in orca_params.DatasetType:
+            if not os.path.exists(os.path.join(data_path, d.name+'.features')):
+                files_exist = False
+                break
+        if files_exist:
+            return
+        
+    all_samples = _label_files(data_path=orca_params.DATA_PATH)
+
+    datasets = {orca_params.DatasetType.TRAIN: defaultdict(list),
+                orca_params.DatasetType.VALIDATE: defaultdict(list),
+                orca_params.DatasetType.TEST: defaultdict(list)}
+
+    # do a stratified train/val/test split
+    for label, files in all_samples.items():
+        if len(files) < 10:
+            continue  # don't bother to shuffle
+        random.shuffle(files)
+        num_train_files = int((len(files) + 1) * train_percentage)
+        num_validate_files = int((len(files) + 1) * validate_percentage)
+        datasets[orca_params.DatasetType.TRAIN][label] = \
+            files[: num_train_files]
+        datasets[orca_params.DatasetType.VALIDATE][label] = \
+            files[num_train_files: num_train_files + num_validate_files]
+        datasets[orca_params.DatasetType.TEST][label] = \
+            files[num_train_files + num_validate_files:]
+
+    # quantize and flatten each dataset
+    for dataset_type, contents in datasets.items():
+        flattened_dataset = _flatten_and_quantize_dataset(contents)
+        _extract_and_save_features(flattened_dataset,
+                                   data_path,
+                                   dataset_type)
     print('Done extracting features!')
+    
