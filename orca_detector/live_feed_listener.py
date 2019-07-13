@@ -19,6 +19,7 @@ from threading import Thread
 import uuid
 import urllib.request
 from database_parser import extract_segment_features
+from inference import create_network
 
 
 def _save_audio_segments(stream_url,
@@ -52,7 +53,7 @@ def _save_audio_segments(stream_url,
     os.system(ffmpeg_cli)
 
 
-def _perform_inference(inference_output_path):
+def _perform_inference(model, encoder, inference_samples_path):
     """
     Reads all *.wav audio segments in the specified folder, extracts the features
     performs inference and finally deletes the files. The files will be either 
@@ -62,7 +63,7 @@ def _perform_inference(inference_output_path):
     """
     try:
         audio_segments = glob.glob(
-            os.path.join(inference_output_path, '*.wav'))
+            os.path.join(inference_samples_path, '*.wav'))
         end_of_segment = int(
             orca_params.FILE_SAMPLING_SIZE_SECONDS*orca_params.LIVE_FEED_SAMPLING_RATE)
 
@@ -72,15 +73,25 @@ def _perform_inference(inference_output_path):
 
         print('Performing inference for {} audio segments'.format(
             (len(audio_segments))))
+        x = features[:, 1]
+        
+        results = model.predict(x=x,
+                                batch_size=orca_params.BATCH_SIZE,
+                                verbose=1)
 
-        # TODO: Perform the inteference here and measure the time duration.
-
-        shutil.rmtree(inference_output_path)
+        shutil.rmtree(inference_samples_path)
     except:
-        print(f'Unable to perform inference for {inference_output_path}')
+        print('Unable to perform inference for {}'.format(
+            (inference_samples_path)))
 
 @click.command(help="Performs inference on the specified OrcaSound Live Feed source(s).",
                epilog=orca_params.EPILOGUE)
+@click.option('--model-name',
+              help='Specify the model name to use.',
+              default=orca_params.DEFAULT_MODEL_NAME,
+              show_default=True,
+              type=click.Choice(
+                  choices=orca_params.MODEL_NAMES))
 @click.option('--stream-name',
               help='Specify the hydrophone live feed stream to listen to.',
               default='All',
@@ -98,14 +109,21 @@ def _perform_inference(inference_output_path):
               help='Total seconds for each iteration.',
               show_default=True,
               default=orca_params.LIVE_FEED_ITERATION_SECONDS)
+@click.option('--weights-path',
+              help='Specify the weights path to use.',
+              default=os.path.join(orca_params.OUTPUT_PATH,
+                                   'orca_weights_latest.hdf5'),
+              show_default=True)
 @click.option('--verbose',
-              help='Sets the ffmpeg logs verbocity.',
+              help='Sets the ffmpeg logs verbosity.',
               show_default=True,
               default=False)
-def live_feed_inference(stream_name,
+def live_feed_inference(model_name,
+                        stream_name,
                         segment_seconds,
                         sleep_seconds,
                         iteration_seconds,
+                        weights_path,
                         verbose,
                         live_feed_path=orca_params.LIVE_FEED_PATH,
                         positive_samples_path=orca_params.POSITIVE_SAMPLES_PATH):
@@ -126,12 +144,16 @@ def live_feed_inference(stream_name,
     to simulate a positive signal. The file is deleted after usage.
     """
 
+    # Create the network first
+
+    model, encoder = create_network(model_name, weights_path)
+
     counter = 0
-    
+
     while True:
         positive_sample = ''
         positive_samples = glob.glob(
-        os.path.join(positive_samples_path, '*.wav'))
+            os.path.join(positive_samples_path, '*.wav'))
 
         if len(positive_samples) > 0:
             positive_sample = positive_samples[0]
@@ -151,30 +173,31 @@ def live_feed_inference(stream_name,
                 stream_url = '{}/hls/{}/live.m3u8'.format(
                     (_stream_base), (stream_id))
 
-                recording_output_path = os.path.join(
+                recording_samples_path = os.path.join(
                     live_feed_path, str(counter % 2))
-                inference_output_path = os.path.join(
+                inference_samples_path = os.path.join(
                     live_feed_path, str((counter+1) % 2))
 
                 # make sure the folders exist
-                if not os.path.exists(recording_output_path):
-                    os.mkdir(recording_output_path)
-                if not os.path.exists(inference_output_path):
-                    os.mkdir(inference_output_path)
+                if not os.path.exists(recording_samples_path):
+                    os.mkdir(recording_samples_path)
+                if not os.path.exists(inference_samples_path):
+                    os.mkdir(inference_samples_path)
 
                 thread = Thread(target=_save_audio_segments, args=(stream_url,
                                                                    _stream_name,
                                                                    segment_seconds,
                                                                    iteration_seconds,
                                                                    positive_sample,
-                                                                   recording_output_path,
+                                                                   recording_samples_path,
                                                                    verbose, ))
                 threads.append(thread)
                 thread.start()
             except:
                 print(f'Unable to load stream from {stream_url}')
 
-        _perform_inference(inference_output_path)
+        results = _perform_inference(model, encoder, inference_samples_path)
+        print(results)
 
         _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
 

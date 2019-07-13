@@ -12,4 +12,6 @@ aws s3 cp s3://w251-orca-detector-data/vggish_weights.tar.gz ./
 tar -xvf ./vggish_weights.tar.gz -C ./
 rm ./vggish_weights.tar.gz
 
+aws s3 cp s3://w251-orca-detector-data/orca_weights_616776.hdf5 ~/OrcaDetector/results/orca_weights_latest.hdf5
+
 docker build -t orca_dev -f ./orca_detector/Dockerfile.dev ./orca_detector

@@ -27,11 +27,19 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
-def create_network(model_name, num_classes, weights_path):
+def create_network(model_name, weights_path):
     """ 
     Instantiate trained model from given weights.
-    Create the output shape based on num_classes.
+    Create the output shape based on num_classes of the saved encoder.
     """
+    
+    # load trained LabelEncoder and encode test set labels
+    encoder_path = os.path.join(orca_params.DATA_PATH, 'label_encoder.p')
+    if os.path.isfile(encoder_path):
+        with open(encoder_path, 'rb') as f:
+            print(f'Loading trained LabelEncoder from {encoder_path}')
+            encoder = pickle.load(f)
+    num_classes = len(encoder.classes_)
 
     if model_name == 'vggish':
         model = OrcaVGGish(load_weights=True,
@@ -43,9 +51,9 @@ def create_network(model_name, num_classes, weights_path):
                            weights=weights_path,
                            out_dim=num_classes).get_model()
     else:
-        raise Exception('No model specified.  Use `--model_name` arg.')
+        raise Exception('No model specified.  Use `--model-name` arg.')
 
-    return model
+    return model, encoder
 
 @click.command(help="Performs inference.",
                epilog=orca_params.EPILOGUE)
@@ -57,7 +65,8 @@ def create_network(model_name, num_classes, weights_path):
                   choices=orca_params.MODEL_NAMES))
 @click.option('--weights-path',
               help='Specify the weights path to use.', 
-              default=None, 
+              default=os.path.join(orca_params.OUTPUT_PATH,
+                                    'orca_weights_latest.hdf5'), 
               show_default=True)
 @click.option('--predict-only',
               help='Run inference for unlabeled audio.',
@@ -76,20 +85,10 @@ def infer(model_name, weights_path, predict_only):
         # TODO: handle cases where we have features but no labels
         pass
 
-    # load trained LabelEncoder and encode test set labels
-    encoder_path = os.path.join(orca_params.DATA_PATH, 'label_encoder.p')
-    if os.path.isfile(encoder_path):
-        with open(encoder_path, 'rb') as f:
-            print(f'Loading trained LabelEncoder from {encoder_path}')
-            encoder = pickle.load(f)
-    test_labels = encode_labels(test_labels, encoder)
-    num_classes = len(encoder.classes_)
-
     # instantiate model and load weights
-    if weights_path is None:
-        weights_path = os.path.join(orca_params.OUTPUT_PATH,
-                                    'orca_weights_latest.hdf5')
-    model = create_network(model_name, num_classes, weights_path)
+    model, encoder = create_network(model_name, num_classes, weights_path)
+
+    test_labels = encode_labels(test_labels, encoder)
 
     results = model.predict(x=test_features,
                             batch_size=orca_params.BATCH_SIZE,
