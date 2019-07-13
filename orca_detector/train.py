@@ -6,15 +6,18 @@ Main file to train a model for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
-from vggish_model import OrcaVGGish
-from orca_utils import plot_train_metrics, save_model
-from orca_params import DatasetType
-from database_parser import load_features, create_label_encoding, encode_labels
+import argparse
+import datetime
 import orca_params
 import os
 import tensorflow as tf
-import datetime
+
+from database_parser import load_features, create_label_encoding, encode_labels
 from keras.models import Sequential
+from logreg_model import OrcaLogReg
+from orca_params import DatasetType
+from orca_utils import plot_train_metrics, save_model
+from vggish_model import OrcaVGGish
 
 # Reduce TensorFlow verbosity
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -22,21 +25,27 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
-def create_network(classes):
+def create_network(model_name, classes):
     """ 
     Instantiate but don't yet fit the model.
     Create the output shape based on the classes length
     """
 
-    sound_extractor = OrcaVGGish(load_weights=True,
-                                 weights='audioset',
-                                 out_dim=len(classes),
-                                 pooling='avg').get_model()
+    if model_name == 'vggish':
+        model = OrcaVGGish(load_weights=True,
+                           weights='audioset',
+                           out_dim=len(classes),
+                           pooling='avg').get_model()
+    elif model_name == 'logreg':
+        model = OrcaLogReg(load_weights=False,
+                           out_dim=len(classes)).get_model()
+    else:
+        raise Exception('No model specified.  Use `--model_name` arg.')
+        
+    return model
 
-    return sound_extractor
 
-
-def run(**params):
+def run(model_name, **params):
 
     print(f'TensorFlow version: {tf.VERSION}')
     print(f'Keras version: {tf.keras.__version__}')
@@ -59,7 +68,7 @@ def run(**params):
           f'{orca_params.OTHER_CLASSES}\n')
     
 
-    model = create_network(classes)
+    model = create_network(model_name, classes)
 
     history = model.fit(x=train_features,
                         y=train_labels,
@@ -80,4 +89,18 @@ def run(**params):
 
 
 if __name__ == '__main__':
-    run()
+    # parse command line parameters and flags
+    parser = argparse.ArgumentParser(description='OrcaDetector - W251 (Summer 2019)',
+                        epilog='by Spyros Garyfallos, Ram Iyer, Mike Winton')
+    parser.add_argument('--model_name',
+                        type=str.lower,
+                        choices=orca_params.MODEL_NAMES,
+                        help='Specify the model name to use.')
+    args = parser.parse_args()
+    
+    if not args.model_name:
+        model_name = orca_params.DEFAULT_MODEL_NAME
+    else:
+        model_name = args.model_name
+
+    run(model_name)

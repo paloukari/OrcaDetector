@@ -16,6 +16,7 @@ import tensorflow as tf
 
 from database_parser import encode_labels, load_features
 from keras.models import Sequential
+from logreg_model import OrcaLogReg
 from orca_params import DatasetType
 from orca_utils import calculate_accuracies
 from vggish_model import OrcaVGGish
@@ -26,21 +27,28 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
-def create_network(num_classes, weights_path):
+def create_network(model_name, num_classes, weights_path):
     """ 
     Instantiate trained model from given weights.
     Create the output shape based on num_classes.
     """
 
-    sound_extractor = OrcaVGGish(load_weights=True,
-                                 weights=weights_path,
-                                 out_dim=num_classes,
-                                 pooling='avg').get_model()
+    if model_name == 'vggish':
+        model = OrcaVGGish(load_weights=True,
+                           weights=weights_path,
+                           out_dim=num_classes,
+                           pooling='avg').get_model()
+    elif model_name == 'logreg':
+        model = OrcaLogReg(load_weights=True,
+                           weights=weights_path,
+                           out_dim=num_classes).get_model()
+    else:
+        raise Exception('No model specified.  Use `--model_name` arg.')
+        
+    return model
 
-    return sound_extractor
 
-
-def run(weights_path=None, predict_only=False, **params):
+def run(model_name, weights_path=None, predict_only=False, **params):
 
     print(f'TensorFlow version: {tf.VERSION}')
     print(f'Keras version: {tf.keras.__version__}')
@@ -66,7 +74,7 @@ def run(weights_path=None, predict_only=False, **params):
     if weights_path is None:
         weights_path = os.path.join(orca_params.OUTPUT_PATH,
                                     'orca_weights_latest.hdf5')
-    model = create_network(num_classes, weights_path)
+    model = create_network(model_name, num_classes, weights_path)
 
     results = model.predict(x=test_features,
                             batch_size=orca_params.BATCH_SIZE,
@@ -96,7 +104,16 @@ if __name__ == '__main__':
                         help='Specify the weights path to use.')
     parser.add_argument('--predict_only', action='store_true',
                         help = 'Run inference for unlabeled audio.')
+    parser.add_argument('--model_name',
+                        type=str.lower,
+                        choices=orca_params.MODEL_NAMES,
+                        help='Specify the model name to use.')
     args = parser.parse_args()
+    
+    if not args.model_name:
+        model_name = orca_params.DEFAULT_MODEL_NAME
+    else:
+        model_name = args.model_name
     
     if not args.predict_only:
         predict_only = False
@@ -104,6 +121,6 @@ if __name__ == '__main__':
         predict_only = True
     
     if args.weights:
-        run(weights=arg.weights, predict_only=predict_only)
+        run(model_name=model_name, weights=arg.weights, predict_only=predict_only)
     else:
-        run(predict_only=predict_only)
+        run(model_name=model_name, predict_only=predict_only)
