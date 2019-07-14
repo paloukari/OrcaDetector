@@ -61,9 +61,16 @@ def _perform_inference(model, encoder, inference_samples_path):
 
     To simulate an orca, drop some positive 1 second samples in the folder.
     """
+
+    results = None
     try:
         audio_segments = glob.glob(
             os.path.join(inference_samples_path, '*.wav'))
+        if len(audio_segments) == 0:
+            print('No audio segments found in {}'.format(
+                (inference_samples_path)))
+            return results
+
         end_of_segment = int(
             orca_params.FILE_SAMPLING_SIZE_SECONDS*orca_params.LIVE_FEED_SAMPLING_RATE)
 
@@ -73,16 +80,27 @@ def _perform_inference(model, encoder, inference_samples_path):
 
         print('Performing inference for {} audio segments'.format(
             (len(audio_segments))))
-        x = features[:, 1]
-        
+
+        if len(features) == 0:
+            return results
+
+        # I'm sure there is a better way to do this
+        features = np.array(features)
+        x = np.array([i[0] for i in features[:, 1]])
+
         results = model.predict(x=x,
                                 batch_size=orca_params.BATCH_SIZE,
                                 verbose=1)
-
+        results = np.array([[encoder.classes_[np.argmax(i)], np.max(i)] for i in results])
+        # Add the filenames
+        file_names = features[:, 0]
+        results = np.hstack((file_names.reshape(len(file_names), 1), results))
         shutil.rmtree(inference_samples_path)
     except:
         print('Unable to perform inference for {}'.format(
             (inference_samples_path)))
+
+    return results
 
 @click.command(help="Performs inference on the specified OrcaSound Live Feed source(s).",
                epilog=orca_params.EPILOGUE)
@@ -180,9 +198,9 @@ def live_feed_inference(model_name,
 
                 # make sure the folders exist
                 if not os.path.exists(recording_samples_path):
-                    os.mkdir(recording_samples_path)
+                    os.makedirs(recording_samples_path)
                 if not os.path.exists(inference_samples_path):
-                    os.mkdir(inference_samples_path)
+                    os.makedirs(inference_samples_path)
 
                 thread = Thread(target=_save_audio_segments, args=(stream_url,
                                                                    _stream_name,
