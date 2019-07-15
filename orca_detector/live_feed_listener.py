@@ -135,6 +135,7 @@ def _perform_inference(model, encoder, inference_samples_path):
 @click.option('--verbose',
               help='Sets the ffmpeg logs verbosity.',
               show_default=True,
+              is_flag=True,
               default=False)
 def live_feed_inference(model_name,
                         stream_name,

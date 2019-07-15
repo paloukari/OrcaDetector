@@ -27,14 +27,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
-def create_network(model_name, weights_path):
+def create_network(model_name, encoder_path, weights_path):
     """ 
-    Instantiate trained model from given weights.
+    Instantiate trained model from given weights and label encoder.
     Create the output shape based on num_classes of the saved encoder.
     """
     
     # load trained LabelEncoder and encode test set labels
-    encoder_path = os.path.join(orca_params.DATA_PATH, 'label_encoder.p')
     if os.path.isfile(encoder_path):
         with open(encoder_path, 'rb') as f:
             print(f'Loading trained LabelEncoder from {encoder_path}')
@@ -63,6 +62,11 @@ def create_network(model_name, weights_path):
               show_default=True,
               type=click.Choice(
                   choices=orca_params.MODEL_NAMES))
+@click.option('--label-encoder-path',
+              help='Specify the label encoder path to use.', 
+              default=os.path.join(orca_params.OUTPUT_PATH,
+                                    'label_encoder_latest.p'), 
+              show_default=True)
 @click.option('--weights-path',
               help='Specify the weights path to use.', 
               default=os.path.join(orca_params.OUTPUT_PATH,
@@ -71,8 +75,9 @@ def create_network(model_name, weights_path):
 @click.option('--predict-only',
               help='Run inference for unlabeled audio.',
               show_default=True,
+              is_flag=True,
               default=False)
-def infer(model_name, weights_path, predict_only):
+def infer(model_name, label_encoder_path, weights_path, predict_only):
 
     print(f'TensorFlow version: {tf.VERSION}')
     print(f'Keras version: {tf.keras.__version__}')
@@ -86,7 +91,9 @@ def infer(model_name, weights_path, predict_only):
         pass
 
     # instantiate model and load weights
-    model, encoder = create_network(model_name, num_classes, weights_path)
+    model, encoder = create_network(model_name,
+                                    label_encoder_path,
+                                    weights_path)
 
     test_labels = encode_labels(test_labels, encoder)
 
