@@ -51,7 +51,7 @@ ibmcloud sl vs create \
   --san
 ```
 
-
+	
 Wait for the provisioning completion 
 ```
 watch ibmcloud sl vs list
@@ -146,7 +146,7 @@ This Orca detector comes with a CLI entry point and exposes the following comman
 ```
 OrcaDetector - W251 (Summer 2019)
 
-Usage: cli.py [OPTIONS] COMMAND [ARGS]...
+Usage: orca.py [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -187,7 +187,7 @@ Then kick off the process:
 ```
 sudo docker exec -it noise_collector bash
 cd orca_detector
-python3 cli.py collect-noise
+python3 orca.py collect-noise
 ```
 
 You can detach from the container (`CTRL-P -> CTRL-Q`) and close your machine.  The script will keep running.  To re-attach:
@@ -202,18 +202,18 @@ docker attach noise_collector
 To process the source data, this **only needs to be run once**.  This will generate the individual audio segment feature files if they don't already exist.  Once this has been run, the resulting feature files will be included in our `data.tar.gz` archive.
 
 ```
-python3 cli.py features
+python3 orca.py features
 ```
 
 The allowed options are:
 
 ```
-Usage: cli.py features [OPTIONS]
+Usage: orca.py features [OPTIONS]
 
   Indexes files and creates a train/val/test split.
 
 Options:
-  --overwrite TEXT  Regenerate features, overwriting any existing feature
+  --overwrite       Regenerate features, overwriting any existing feature
                     files.
   --help            Show this message and exit.
   ```
@@ -223,13 +223,13 @@ Options:
 Once you have extracted the features, you can train a network by running:
 
 ```
-python3 cli.py train
+python3 orca.py train
 ```
 
 The allowed options are:
 
 ``` 
-Usage: cli.py train [OPTIONS]
+Usage: orca.py train [OPTIONS]
 
   Trains the Orca Detector model.
 
@@ -258,13 +258,13 @@ With this network, you can perform Live Feed inference on the [Orca Sound Hydrop
 
 
 ```
-python3 cli.py infer-live
+python3 orca.py infer-live
 ```
 
 The allowed options are:
 
 ``` 
-Usage: cli.py infer-live [OPTIONS]
+Usage: orca.py infer-live [OPTIONS]
 
   Performs inference on the specified OrcaSound Live Feed source(s).
 
@@ -280,9 +280,11 @@ Options:
                                   [default: 0]
   --iteration-seconds INTEGER     Total seconds for each iteration.  [default:
                                   10]
+  --label-encoder-path TEXT       Specify the label encoder to use.  [default:
+                                  /results/label_encoder_latest.p]
   --weights-path TEXT             Specify the weights path to use.  [default:
                                   /results/orca_weights_latest.hdf5]
-  --verbose TEXT                  Sets the ffmpeg logs verbosity.  [default:
+  --verbose                       Sets the ffmpeg logs verbosity.  [default:
                                   False]
   --help                          Show this message and exit.
 
@@ -291,12 +293,34 @@ Options:
 
 ### Running inference with labeled test set
 
-If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.
+If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
 
 ```
-python3 cly.py \
+python3 orca.py \
     infer \
-    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+    --label-encoder-path /results/label_encoder_2019-07-15-21:17:16.030513.p \
+    --weights-path /results/weights_val_loss_0.7210_val_acc_0.8746_2019-07-15-21:17:16.030513.hdf5 \
+```
+
+The allowed options are:
+
+``` 
+Usage: orca.py infer [OPTIONS]
+
+  Performs inference on a test set (labeled or unlabeled).
+
+Options:
+  --model-name [vggish|logreg]    Specify the model name to use.  [default:
+                                  vggish]
+  --label-encoder-path TEXT       Specify the label encoder to use.  [default:
+                                  /results/label_encoder_latest.p]
+  --weights-path TEXT             Specify the weights path to use.  [default:
+                                  /results/orca_weights_latest.hdf5]
+  --predict-only                  Sets the flag indicating there are no ground
+                                  truth labels.  [default: False]
+  --help                          Show this message and exit.
+
+  by Spyros Garyfallos, Ram Iyer, Mike Winton
 ```
 
 In addition to displaying the classification report, it is saved to disk as a json file.  The confusion matrix is not displayed (due to large size of the matrix), but is aved to disk as a csv file.  These can be loaded into a notebook for further analysis.
@@ -309,9 +333,10 @@ In addition to displaying the classification report, it is saved to disk as a js
 This is similar to above, with one additional CLI flag:
 
 ```
-python3 cly.py \
-    infer
-    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+python3 orca.py \
+    infer \
+    --label-encoder-path /results/label_encoder_2019-07-15-21:17:16.030513.p \
+    --weights-path /results/weights_val_loss_0.7210_val_acc_0.8746_2019-07-15-21:17:16.030513.hdf5 \
     --predict-only    
 ```
 
