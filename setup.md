@@ -140,27 +140,183 @@ Once inside the container, try running:
 nvidia-smi
 ```
 
-### Preprocess the wav files into training segments
+## 5. Orca Detector CLI commands
+This Orca detector comes with a CLI entry point and exposes the following commands:
+
+```
+OrcaDetector - W251 (Summer 2019)
+
+Usage: cli.py [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  collect-noise  Periodically records samples from the predefined OrcaSound...
+  features       Indexes files and creates a train/val/test split.
+  infer          Performs inference.
+  infer-live     Performs inference on the specified OrcaSound Live Feed...
+  train          Trains the Orca Detector model.
+```
+
+
+The options of these commands can be shown by adding the `--help` 
+
+
+### Record background noise
+
+
+We are recording audio samples from the following hydrophone live streams as background "Noise":
+
+- [OrcasoundLab](http://live.orcasound.net/orcasound-lab)
+
+The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  Spin up a separate `orca_dev` Docker container instance:
+
+```
+sudo docker run \
+    --rm \
+    --name noise_collector \
+    -tid \
+    -v ~/OrcaDetector:/src \
+    -v ~/OrcaDetector/data:/data \
+    orca_dev
+```
+
+Then kick off the process:
+
+```
+sudo docker exec -it noise_collector bash
+cd orca_detector
+python3 cli.py collect-noise
+```
+
+You can detach from the container (`CTRL-P -> CTRL-Q`) and close your machine.  The script will keep running.  To re-attach:
+
+```
+docker attach noise_collector
+```
+
+
+### Preprocess the wav files and extract the features
 
 To process the source data, this **only needs to be run once**.  This will generate the individual audio segment feature files if they don't already exist.  Once this has been run, the resulting feature files will be included in our `data.tar.gz` archive.
 
 ```
-python3 database_parser.py
+python3 cli.py features
 ```
 
-### Verify that the `vggish` Keras model builds
-
-Once inside the container, the following script should run to make sure we can instantiate the Keras model and load it's pretrained weights:
+The allowed options are:
 
 ```
-python3 vggish_model.py
+Usage: cli.py features [OPTIONS]
+
+  Indexes files and creates a train/val/test split.
+
+Options:
+  --overwrite TEXT  Regenerate features, overwriting any existing feature
+                    files.
+  --help            Show this message and exit.
+  ```
+
+### Train a network
+
+Once you have extracted the features, you can train a network by running:
+
+```
+python3 cli.py train
 ```
 
-If it was successful, you should see a Keras model summary.
+The allowed options are:
+
+``` 
+Usage: cli.py train [OPTIONS]
+
+  Trains the Orca Detector model.
+
+Options:
+  --model-name [vggish|logreg]  Specify the model name to use.  [default:
+                                vggish]
+  --help                        Show this message and exit.
+
+```
 
 
+After training has completed, several timestamped files will be written to disk:
 
-## 5. (OPTIONAL) Launch Jupyter Lab in the container
+- loss plot
+- accuracy plot
+- Keras json config (for documentation only)
+- Model weights (to be used for inference)
+
+There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the trained weights.
+
+> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
+
+### Perform Live Feed inference
+
+With this network, you can perform Live Feed inference on the [Orca Sound Hydrophones](http://live.orcasound.net/). The following command will periodically (10 sec default) print the inference species results.
+
+
+```
+python3 cli.py infer-live
+```
+
+The allowed options are:
+
+``` 
+Usage: cli.py infer-live [OPTIONS]
+
+  Performs inference on the specified OrcaSound Live Feed source(s).
+
+Options:
+  --model-name [vggish|logreg]    Specify the model name to use.  [default:
+                                  vggish]
+  --stream-name [BushPoint|OrcasoundLab|PortTownsend|All]
+                                  Specify the hydrophone live feed stream to
+                                  listen to.  [default: All]
+  --segment-seconds INTEGER       Defines how many seconds each audio segment
+                                  will be.  [default: 1]
+  --sleep-seconds INTEGER         Seconds to sleep between each iteration.
+                                  [default: 0]
+  --iteration-seconds INTEGER     Total seconds for each iteration.  [default:
+                                  10]
+  --weights-path TEXT             Specify the weights path to use.  [default:
+                                  /results/orca_weights_latest.hdf5]
+  --verbose TEXT                  Sets the ffmpeg logs verbosity.  [default:
+                                  False]
+  --help                          Show this message and exit.
+
+  by Spyros Garyfallos, Ram Iyer, Mike Winton
+```
+
+### Running inference with labeled test set
+
+If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.
+
+```
+python3 cly.py \
+    infer \
+    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+```
+
+In addition to displaying the classification report, it is saved to disk as a json file.  The confusion matrix is not displayed (due to large size of the matrix), but is aved to disk as a csv file.  These can be loaded into a notebook for further analysis.
+
+> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
+ 
+
+### Running inference on unlabeled audio
+
+This is similar to above, with one additional CLI flag:
+
+```
+python3 cly.py \
+    infer
+    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
+    --predict-only    
+```
+
+
+## 6. (OPTIONAL) Launch Jupyter Lab in the container
 
 After you've started the container as described above, if you want to _also_ open a Jupyter notebook (e.g. for development/debugging), issue this command:
 
@@ -180,7 +336,7 @@ Then go to your browser and enter:
 http://127.0.0.1:8888?token=<whatever token got displayed in the logs>
 ```
 
-## 5. (Alternative) Manually setup the container for remote debugging
+## 6. (Alternative) Manually setup the container for remote debugging
 
 We need to setup the container to allow the same SSH public key. The entire section could be automated in the dockerfile. We can add our public keys in the repo and pre-authorize us at docker build.
 
@@ -251,88 +407,4 @@ Hit F1 and select Remote-SSH:Connect to Host
 
 Once in there, open the OrcaDetector folder, install the Python extension on the container (from the Vs Code extensions), select the python interpreter and start debugging.
 
-
-## 6. Train the OrcaDetector
-
-### Training
-
-Set the relevant hyperparameters in `orca_params.py`, and then run the training script:
-
-```
-python3 train.py
-```
-
-After training has completed, several timestamped files will be written to disk:
-
-- loss plot
-- accuracy plot
-- Keras json config (for documentation only)
-- Model weights (to be used for inference)
-
-There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the trained weights.
-
-> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
  
-### Running inference with labeled test set
-
-If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.
-
-```
-python3 inference.py \
-    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
-```
-
-In addition to displaying the classification report, it is saved to disk as a json file.  The confusion matrix is not displayed (due to large size of the matrix), but is aved to disk as a csv file.  These can be loaded into a notebook for further analysis.
-
-> IMPORTANT: make sure to copy these files off of the instance before terminating it!  Also note that there is currently no cleanup script to delete old files, so they manually need to be pruned if disk capacity becomes a concern.
- 
-
-### Running inference on unlabeled audio
-
-This is similar to above, with one additional CLI flag:
-
-```
-python3 inference.py \
-    --weights /results/weights_val_loss=0.5935_val_acc=0.8848_2019-07-05-03:10:20.628991.hdf5 \
-    --predict_only    
-```
-
-
-## 7. Recording from online live feed sources
-
-We are recording audio samples from the following hydrophone live streams as background "Noise":
-
-- [OrcasoundLab](http://live.orcasound.net/orcasound-lab)
-
-The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  Spin up a separate `orca_dev` Docker container instance:
-
-```
-sudo docker run \
-    --rm \
-    --name noise_collector \
-    -tid \
-    -v ~/OrcaDetector:/src \
-    -v ~/OrcaDetector/data:/data \
-    orca_dev
-```
-
-Then kick off the process:
-
-```
-sudo docker exec -it noise_collector bash
-cd orca_detector
-python3 noise_collector.py
-```
-
-You can detach from the container (`CTRL-P -> CTRL-Q`) and close your machine.  The script will keep running.  To re-attach:
-
-```
-docker attach noise_collector
-```
-
-
-To setup a test audio live feed from an audio sample, run this command
-
-```
-#TODO
-``` 

@@ -6,7 +6,7 @@ Main file to run inference with a pretrained model for the Orca project.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
-import argparse
+import click
 import datetime
 import numpy as np
 import orca_params
@@ -27,11 +27,19 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 RUN_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
-def create_network(model_name, num_classes, weights_path):
+def create_network(model_name, weights_path):
     """ 
     Instantiate trained model from given weights.
-    Create the output shape based on num_classes.
+    Create the output shape based on num_classes of the saved encoder.
     """
+    
+    # load trained LabelEncoder and encode test set labels
+    encoder_path = os.path.join(orca_params.DATA_PATH, 'label_encoder.p')
+    if os.path.isfile(encoder_path):
+        with open(encoder_path, 'rb') as f:
+            print(f'Loading trained LabelEncoder from {encoder_path}')
+            encoder = pickle.load(f)
+    num_classes = len(encoder.classes_)
 
     if model_name == 'vggish':
         model = OrcaVGGish(load_weights=True,
@@ -43,12 +51,28 @@ def create_network(model_name, num_classes, weights_path):
                            weights=weights_path,
                            out_dim=num_classes).get_model()
     else:
-        raise Exception('No model specified.  Use `--model_name` arg.')
-        
-    return model
+        raise Exception('No model specified.  Use `--model-name` arg.')
 
+    return model, encoder
 
-def run(model_name, weights_path=None, predict_only=False, **params):
+@click.command(help="Performs inference.",
+               epilog=orca_params.EPILOGUE)
+@click.option('--model-name',
+              help='Specify the model name to use.',
+              default=orca_params.DEFAULT_MODEL_NAME,
+              show_default=True,
+              type=click.Choice(
+                  choices=orca_params.MODEL_NAMES))
+@click.option('--weights-path',
+              help='Specify the weights path to use.', 
+              default=os.path.join(orca_params.OUTPUT_PATH,
+                                    'orca_weights_latest.hdf5'), 
+              show_default=True)
+@click.option('--predict-only',
+              help='Run inference for unlabeled audio.',
+              show_default=True,
+              default=False)
+def infer(model_name, weights_path, predict_only):
 
     print(f'TensorFlow version: {tf.VERSION}')
     print(f'Keras version: {tf.keras.__version__}')
@@ -61,29 +85,19 @@ def run(model_name, weights_path=None, predict_only=False, **params):
         # TODO: handle cases where we have features but no labels
         pass
 
-    # load trained LabelEncoder and encode test set labels
-    encoder_path = os.path.join(orca_params.DATA_PATH, 'label_encoder.p')
-    if os.path.isfile(encoder_path):
-        with open(encoder_path, 'rb') as f:
-            print(f'Loading trained LabelEncoder from {encoder_path}')
-            encoder = pickle.load(f)
-    test_labels = encode_labels(test_labels, encoder)
-    num_classes = len(encoder.classes_)
-    
     # instantiate model and load weights
-    if weights_path is None:
-        weights_path = os.path.join(orca_params.OUTPUT_PATH,
-                                    'orca_weights_latest.hdf5')
-    model = create_network(model_name, num_classes, weights_path)
+    model, encoder = create_network(model_name, num_classes, weights_path)
+
+    test_labels = encode_labels(test_labels, encoder)
 
     results = model.predict(x=test_features,
                             batch_size=orca_params.BATCH_SIZE,
                             verbose=1)
-    
+
     print(f'Labels predicted for {len(test_features)} samples')
 
     if not predict_only:
-        # calculate classification metrics 
+        # calculate classification metrics
         pred_labels = np.argmax(results, axis=1)
         true_labels = np.argmax(test_labels, axis=1)
         calculate_accuracies(pred_labels,
@@ -92,35 +106,3 @@ def run(model_name, weights_path=None, predict_only=False, **params):
     else:
         pred_labels = np.argmax(results, axis=1)
         # TODO: do something with predictions on unlabeled audio
-
-
-if __name__ == '__main__':
-    
-    # parse command line parameters and flags
-    parser = argparse.ArgumentParser(description='OrcaDetector - W251 (Summer 2019)',
-                        epilog='by Spyros Garyfallos, Ram Iyer, Mike Winton')
-    parser.add_argument('--weights',
-                        type=str,
-                        help='Specify the weights path to use.')
-    parser.add_argument('--predict_only', action='store_true',
-                        help = 'Run inference for unlabeled audio.')
-    parser.add_argument('--model_name',
-                        type=str.lower,
-                        choices=orca_params.MODEL_NAMES,
-                        help='Specify the model name to use.')
-    args = parser.parse_args()
-    
-    if not args.model_name:
-        model_name = orca_params.DEFAULT_MODEL_NAME
-    else:
-        model_name = args.model_name
-    
-    if not args.predict_only:
-        predict_only = False
-    else:
-        predict_only = True
-    
-    if args.weights:
-        run(model_name=model_name, weights=arg.weights, predict_only=predict_only)
-    else:
-        run(model_name=model_name, predict_only=predict_only)

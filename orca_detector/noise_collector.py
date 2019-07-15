@@ -6,6 +6,7 @@ Script to collect random samples of noise from live streams.
 W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
+import click
 import m3u8
 import numpy as np
 import orca_params
@@ -15,9 +16,6 @@ import time
 import uuid
 import urllib.request
 
-# Dictionary of stream base URLs; used in building stream links
-stream_bases = {'OrcasoundLab': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_orcasound_lab',
-                'BushPoint': 'https://s3-us-west-2.amazonaws.com/streaming-orcasound-net/rpi_bush_point'}
 
 def _save_audio(audio_url, output_path):
     """
@@ -35,7 +33,10 @@ def _save_audio(audio_url, output_path):
     os.system(ffmpeg_cli)
   
     
-def collect(data_path=orca_params.DATA_PATH):
+
+@click.command(help="Periodically records samples from the predefined OrcaSound Live Feed sources.",
+               epilog=orca_params.EPILOGUE)
+def collect_noise(data_path=orca_params.DATA_PATH):
     """
     Connects to audio streams in the `streams` dictionary, selects a random segment
     to record, then sleeps for 1-15 minutes before repeating.  The loop never
@@ -44,7 +45,7 @@ def collect(data_path=orca_params.DATA_PATH):
     
     while True:
 
-        for stream_name, stream_base in stream_bases.items():
+        for stream_name, stream_base in orca_params.ORCASOUND_STREAMS.items():
             try:
                 # get the ID of the latest stream and build URL to load
                 latest = f'{stream_base}/latest.txt'
@@ -66,6 +67,3 @@ def collect(data_path=orca_params.DATA_PATH):
         sleep_sec = np.random.randint(low=60, high=900)
         print(f'Sleeping for {sleep_sec} seconds before getting next sample.\n')
         time.sleep(sleep_sec)
-
-if __name__ == '__main__':
-    collect()
