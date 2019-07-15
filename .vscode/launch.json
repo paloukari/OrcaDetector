@@ -4,16 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
-        
-        
         {
             "name": "Python: Orca CLI",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/orca_detector/cli.py",
-            "args": ["infer-live"],
             "console": "integratedTerminal",
+            "args": [ "collect-noise", "--help"],
             "cwd": "${workspaceFolder}/orca_detector/", 
         },
         {

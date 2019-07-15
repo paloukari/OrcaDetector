@@ -15,9 +15,9 @@ import os
 import random
 import shutil
 import time
-from threading import Thread
 import uuid
 import urllib.request
+from threading import Thread
 from database_parser import extract_segment_features
 from inference import create_network
 
@@ -185,11 +185,10 @@ def live_feed_inference(model_name,
 
             try:
                 # get the ID of the latest stream and build URL to load
-                latest = '{}/latest.txt'.format((_stream_base))
+                latest = f'{_stream_base}/latest.txt'
                 stream_id = urllib.request.urlopen(
                     latest).read().decode("utf-8").replace('\n', '')
-                stream_url = '{}/hls/{}/live.m3u8'.format(
-                    (_stream_base), (stream_id))
+                stream_url = f'{_stream_base}/hls/{stream_id}/live.m3u8'
 
                 recording_samples_path = os.path.join(
                     live_feed_path, str(counter % 2))
