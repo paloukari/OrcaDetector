@@ -52,7 +52,7 @@ REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
                  ]
 
 LOSS = 'categorical_crossentropy'
-EPOCHS = 20
+EPOCHS = 10
 BATCH_SIZE = 64
 MODEL_NAMES = ['vggish', 'logreg']
 DEFAULT_MODEL_NAME = 'vggish'

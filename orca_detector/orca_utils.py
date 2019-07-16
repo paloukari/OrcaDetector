@@ -53,6 +53,26 @@ def calculate_accuracies(results, labels=None, run_timestamp='unspecified'):
     print(f'Confusion matrix saved to {conf_matrix_path}')
 
     
+def create_or_replace_symlink(file_path, symlink_path):
+    """
+        Gracefully delete and recreate if it already exists.  The built-in
+        os.symlink() function doesn't allow for replacing existing links.
+
+        ARGS:
+            file_path = path of file to be linked to
+            symlink_path = path of the symlink to be created
+
+        RETURNS:
+            nothing
+    """
+
+    try:
+        os.symlink(file_path, symlink_path)
+    except FileExistsError:
+        os.remove(symlink_path)
+        os.symlink(file_path, symlink_path)
+
+
 def plot_train_metrics(model_history, run_timestamp='unspecified'):
     """
         Generate and save figure with plot of train and validation losses.
@@ -130,21 +150,18 @@ def save_model(model, model_history, run_timestamp='unspecified'):
         orca_params.OUTPUT_PATH, json_filename)
     with open(output_json, 'w') as json_file:
         json_file.write(model.to_json())
+    print(f'Keras model config written to {output_json}')
 
     # save trained model weights
     weights_filename = f'weights_val_loss_{final_val_loss:.4f}_val_acc_{final_val_acc:.4f}_{run_timestamp}.hdf5'
     output_weights = os.path.join(orca_params.OUTPUT_PATH, weights_filename)
     model.save_weights(output_weights)
+    print(f'Saved weights to {output_weights}')
 
-    # Create symbolic link to the most recent weights (to use for testing)
+    # Create symbolic link to the most recent weights (to use for inference)
     symlink_path = os.path.join(
         orca_params.OUTPUT_PATH, 'orca_weights_latest.hdf5')
-    try:
-        os.symlink(output_weights, symlink_path)
-    except FileExistsError:
-        # If the symlink already exist, delete and create again
-        os.remove(symlink_path)
-        os.symlink(output_weights, symlink_path)
-    print(f'Created symbolic link to final weights -> {symlink_path}')
+    create_or_replace_symlink(output_weights, symlink_path)
+    print(f'Created symbolic link to final weights as {symlink_path}')
 
     return output_json, output_weights

@@ -127,6 +127,11 @@ def _perform_inference(model, encoder, inference_samples_path):
               help='Total seconds for each iteration.',
               show_default=True,
               default=orca_params.LIVE_FEED_ITERATION_SECONDS)
+@click.option('--label-encoder-path',
+              help='Specify the label encoder path to use.', 
+              default=os.path.join(orca_params.OUTPUT_PATH,
+                                    'label_encoder_latest.p'), 
+              show_default=True)
 @click.option('--weights-path',
               help='Specify the weights path to use.',
               default=os.path.join(orca_params.OUTPUT_PATH,
@@ -135,12 +140,14 @@ def _perform_inference(model, encoder, inference_samples_path):
 @click.option('--verbose',
               help='Sets the ffmpeg logs verbosity.',
               show_default=True,
+              is_flag=True,
               default=False)
 def live_feed_inference(model_name,
                         stream_name,
                         segment_seconds,
                         sleep_seconds,
                         iteration_seconds,
+                        label_encoder_path,
                         weights_path,
                         verbose,
                         live_feed_path=orca_params.LIVE_FEED_PATH,
@@ -164,7 +171,7 @@ def live_feed_inference(model_name,
 
     # Create the network first
 
-    model, encoder = create_network(model_name, weights_path)
+    model, encoder = create_network(model_name, label_encoder_path, weights_path)
 
     counter = 0
 

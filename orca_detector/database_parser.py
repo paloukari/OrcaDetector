@@ -10,6 +10,7 @@ import click
 import numpy as np
 import mel_params
 import orca_params
+import orca_utils
 import os
 import pandas as pd
 import pickle
@@ -347,7 +348,10 @@ def load_features(data_path=orca_params.DATA_PATH,
     return features, labels
 
 
-def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
+def create_label_encoding(classes,
+                          data_path=orca_params.OUTPUT_PATH,
+                          save=True,
+                          run_timestamp='unspecified'):
     """
         Saves LabelEncoder so inverse transforms can be recovered
 
@@ -357,20 +361,28 @@ def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
     encoder = LabelEncoder()
     encoder.fit(classes)
     if save:
-        label_encoder_file = os.path.join(data_path, 'label_encoder.p')
-        # rename old files instead of overwriting.
-        _backup_datafile(label_encoder_file)
-        with open(label_encoder_file, 'wb') as fp:
+        label_encoder_filename = f'label_encoder_{run_timestamp}.p'
+        label_encoder_path = os.path.join(data_path, label_encoder_filename)
+        with open(label_encoder_path, 'wb') as fp:
             pickle.dump(encoder, fp)
-            print('Saved label encoder to {}'.format(label_encoder_file))
+            print('Saved label encoder to {}'.format(label_encoder_path))
+
+        symlink_path = os.path.join(data_path, 'label_encoder_latest.p')
+        orca_utils.create_or_replace_symlink(label_encoder_path, symlink_path)
+        print(f'Created symbolic link to encoder as {symlink_path}')
 
         # Also save human-readable version
-        csv_file = os.path.join(data_path, 'label_encoder.txt')
+        label_encoder_filename = f'label_encoder_{run_timestamp}.csv'
+        csv_path = os.path.join(data_path, label_encoder_filename)
         df = pd.DataFrame(list(enumerate(encoder.classes_)), columns=['encoded_id', 'label'])
-        df.to_csv(csv_file, index=False)
+        df.to_csv(csv_path, index=False)
+        print('Saved label encoder (in csv format) to {}'.format(csv_path))
+
+        symlink_path = os.path.join(data_path, 'label_encoder_latest.csv')
+        orca_utils.create_or_replace_symlink(csv_path, symlink_path)
+        print(f'Created symbolic link to encoder csv as {symlink_path}')
 
     return encoder
-
 
     
 @click.command(help="Indexes files and creates a train/val/test split.",
@@ -378,6 +390,7 @@ def create_label_encoding(classes, data_path=orca_params.DATA_PATH, save=True):
 @click.option('--overwrite',
               help='Regenerate features, overwriting any existing feature files.',
               default=False,
+              is_flag=True,
               show_default=False)
 def read_files_and_extract_features(overwrite, 
                                     data_path=orca_params.DATA_PATH,
