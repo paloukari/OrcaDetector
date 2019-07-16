@@ -8,9 +8,9 @@
             "name": "Python: Orca CLI",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/orca_detector/cli.py",
+            "program": "${workspaceFolder}/orca_detector/orca.py",
             "console": "integratedTerminal",
-            "args": [ "collect-noise", "--help"],
+            "args": [ "train"],
             "cwd": "${workspaceFolder}/orca_detector/", 
         },
         {
