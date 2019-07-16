@@ -25,6 +25,10 @@ POSITIVE_SAMPLES_PATH = '/data/positive_samples/'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
+BEST_WEIGHT_FILE_NAME = 'weights.best.hdf5'
+TENSORBOARD_BASE_FOLDER = 'tensorboard'
+
+
 
 # Classification params
 OTHER_CLASS = 'Other'
@@ -67,6 +71,9 @@ L2_REG_RATE = 0.01  # used for all Dense and Conv2D layers
 # Model training - LogReg params
 LOGREG_OPTIMIZER = 'adam'
 LOGREG_LEARNING_RATE = 0.005
+
+# EarlyStopping
+EARLY_STOPPING_PATIENCE = 100
 
 # Mel spectrogram hyperparameters
 FILE_MAX_SIZE_SECONDS = 10.00

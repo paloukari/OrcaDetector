@@ -19,6 +19,9 @@ from orca_params import DatasetType
 from orca_utils import plot_train_metrics, save_model
 from vggish_model import OrcaVGGish
 
+from keras.callbacks import TensorBoard, ModelCheckpoint, \
+    LearningRateScheduler, EarlyStopping, ReduceLROnPlateau
+
 # Reduce TensorFlow verbosity
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -72,15 +75,40 @@ def train(model_name):
     print(f'Removed the following classes:\n{orca_params.REMOVE_CLASSES}')
     print(f'Mapped the following classes to "{orca_params.OTHER_CLASS}":\n' \
           f'{orca_params.OTHER_CLASSES}\n')
-    
 
     model = create_network(model_name, classes)
+
+    results_folder = os.path.join(orca_params.RESULTS_FOLDER, model_name)
+    if not os.path.exists(results_folder):
+        os.makedirs(results_folder)
+
+    weight_path = os.path.join(results_folder, orca_params.BEST_WEIGHT_FILE_NAME)
+
+    checkpoint = ModelCheckpoint(weight_path,
+                                 monitor='val_loss',
+                                 verbose=1,
+                                 save_best_only=True,
+                                 mode='min',
+                                 save_weights_only=True)
+
+    early = EarlyStopping(monitor="val_loss",
+                          mode="min",
+                          patience=orca_params.EARLY_STOPPING_PATIENCE)
+
+    tensorboard = TensorBoard(log_dir=os.path.join(
+        orca_params.RESULTS_FOLDER, orca_params.TENSORBOARD_BASE_FOLDER, model_name))
+
+    dynamicLR = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+                                  patience=2, min_lr=orca_params.LEARNING_RATE/100)
+
+    callbacks_list = [tensorboard, checkpoint, dynamicLR, early]
 
     history = model.fit(x=train_features,
                         y=train_labels,
                         validation_data=(validate_features, validate_labels),
                         epochs=orca_params.EPOCHS,
                         batch_size=orca_params.BATCH_SIZE,
+                        callbacks=callbacks_list,
                         verbose=1)
 
     # save loss and accuracy plots to disk
