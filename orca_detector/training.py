@@ -78,7 +78,7 @@ def train(model_name):
 
     model = create_network(model_name, classes)
 
-    results_folder = os.path.join(orca_params.RESULTS_FOLDER, model_name)
+    results_folder = os.path.join(orca_params.OUTPUT_PATH, model_name)
     if not os.path.exists(results_folder):
         os.makedirs(results_folder)
 
@@ -96,7 +96,7 @@ def train(model_name):
                           patience=orca_params.EARLY_STOPPING_PATIENCE)
 
     tensorboard = TensorBoard(log_dir=os.path.join(
-        orca_params.RESULTS_FOLDER, orca_params.TENSORBOARD_BASE_FOLDER, model_name))
+        orca_params.OUTPUT_PATH, orca_params.TENSORBOARD_BASE_FOLDER, model_name))
 
     dynamicLR = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
                                   patience=2, min_lr=orca_params.LEARNING_RATE/100)
