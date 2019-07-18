@@ -13,6 +13,7 @@ import m3u8
 import numpy as np
 import orca_params
 import os
+import pandas as pd 
 import random
 import shutil
 import time
@@ -108,9 +109,7 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
                 orca_params.DETECTIONS_PATH, POSITIVE_INFERENCE_TIMESTAMP)
             shutil.copytree(inference_samples_path, destination_folder)
             print(f'Copied positive inference results at:{destination_folder}')
-
-            np.savetxt(os.path.join(destination_folder, "results.csv"),
-                       results, delimiter=",")
+            pd.DataFrame(results).to_csv(os.path.join(destination_folder, "results.csv"))
 
         shutil.rmtree(inference_samples_path)
     except:
