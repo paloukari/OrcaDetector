@@ -42,14 +42,13 @@ def _save_audio_segments(stream_url,
 
     file_name = f"{stream_name}_%02d.wav"
     output_file = os.path.join(output_path, file_name)
-    mix_with = ''
 
+    mix_with_command = ''
     if os.path.exists(mix_with):
-        mix_with = '-i {} -filter_complex amix=inputs=2:duration=first'.format(
-            (mix_with))
+        print(f'Mixing with {mix_with}')
+        mix_with_command = f'-i {mix_with} -filter_complex amix=inputs=2:duration=first'
 
-    ffmpeg_cli = 'ffmpeg -y -i {} {} -t {} -f segment -segment_time {} {}'.format(
-        (stream_url), (mix_with), (iteration_seconds), (segment_seconds), (output_file))
+    ffmpeg_cli = f'ffmpeg -y -i {stream_url} {mix_with_command} -t {iteration_seconds} -f segment -segment_time {segment_seconds} {output_file}'
 
     if not verbose:
         ffmpeg_cli = ffmpeg_cli + ' -loglevel error'
@@ -108,6 +107,7 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
             destination_folder = os.path.join(
                 orca_params.DETECTIONS_PATH, POSITIVE_INFERENCE_TIMESTAMP)
             shutil.copytree(inference_samples_path, destination_folder)
+            print(f'Copied positive inference results at:{destination_folder}')
 
             np.savetxt(os.path.join(destination_folder, "results.csv"),
                        results, delimiter=",")
@@ -201,16 +201,16 @@ def live_feed_inference(model_name,
     counter = 0
 
     while True:
-        positive_sample = ''
+        mix_with = ''
         positive_samples = glob.glob(
             os.path.join(positive_input_samples_path, '*.wav'))
 
         if len(positive_samples) > 0:
-            positive_sample = positive_samples[0]
+            mix_with = positive_samples[0]
 
         counter = counter + 1
+        
         threads = []
-
         for _stream_name, _stream_base in orca_params.ORCASOUND_STREAMS.items():
             if stream_name != 'All' and stream_name != _stream_name:
                 continue
@@ -238,7 +238,7 @@ def live_feed_inference(model_name,
                                                                    _stream_name,
                                                                    segment_seconds,
                                                                    iteration_seconds,
-                                                                   positive_sample,
+                                                                   mix_with,
                                                                    recording_samples_path,
                                                                    verbose, ))
                 threads.append(thread)
@@ -252,9 +252,9 @@ def live_feed_inference(model_name,
 
         _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
 
-        if os.path.exists(positive_sample):
-            os.remove(positive_sample)
-            print(f'{positive_sample} deleted.')
+        if os.path.exists(mix_with):
+            os.remove(mix_with)
+            print(f'{mix_with} deleted.')
 
         if sleep_seconds > 0:
             print(
