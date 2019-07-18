@@ -7,6 +7,7 @@ W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
 import click
+import datetime
 import glob
 import m3u8
 import numpy as np
@@ -20,6 +21,8 @@ import urllib.request
 from threading import Thread
 from database_parser import extract_segment_features
 from inference import create_network
+
+POSITIVE_INFERENCE_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
 def _save_audio_segments(stream_url,
@@ -49,7 +52,7 @@ def _save_audio_segments(stream_url,
         (stream_url), (mix_with), (iteration_seconds), (segment_seconds), (output_file))
 
     if not verbose:
-        ffmpeg_cli = ffmpeg_cli + ' -loglevel warning'
+        ffmpeg_cli = ffmpeg_cli + ' -loglevel error'
     os.system(ffmpeg_cli)
 
 
@@ -62,7 +65,7 @@ def _perform_inference(model, encoder, inference_samples_path):
     To simulate an orca, drop some positive 1 second samples in the folder.
     """
 
-    results = None
+    results = []
     try:
         audio_segments = glob.glob(
             os.path.join(inference_samples_path, '*.wav'))
@@ -91,16 +94,31 @@ def _perform_inference(model, encoder, inference_samples_path):
         results = model.predict(x=x,
                                 batch_size=orca_params.BATCH_SIZE,
                                 verbose=1)
-        results = np.array([[encoder.classes_[np.argmax(i)], np.max(i)] for i in results])
+        results = np.array(
+            [[encoder.classes_[np.argmax(i)], np.max(i)] for i in results])
         # Add the filenames
         file_names = features[:, 0]
+        file_names = np.array([os.path.basename(file_name) for file_name in file_names])
         results = np.hstack((file_names.reshape(len(file_names), 1), results))
+
+        results = results[(results[:, [2]].astype(float) > orca_params.LIVE_FEED_MINIMUM_INFERENCE_PROBABILITY).ravel()
+                                   & (results[:, [1]] != orca_params.NOISE_CLASS).ravel()]
+
+        if len(results) > 0:
+            destination_folder = os.path.join(
+                orca_params.DETECTIONS_PATH, POSITIVE_INFERENCE_TIMESTAMP)
+            shutil.copytree(inference_samples_path, destination_folder)
+
+            np.savetxt(os.path.join(destination_folder, "results.csv"),
+                       results, delimiter=",")
+
         shutil.rmtree(inference_samples_path)
     except:
         print('Unable to perform inference for {}'.format(
             (inference_samples_path)))
 
     return results
+
 
 @click.command(help="Performs inference on the specified OrcaSound Live Feed source(s).",
                epilog=orca_params.EPILOGUE)
@@ -128,14 +146,14 @@ def _perform_inference(model, encoder, inference_samples_path):
               show_default=True,
               default=orca_params.LIVE_FEED_ITERATION_SECONDS)
 @click.option('--label-encoder-path',
-              help='Specify the label encoder path to use.', 
+              help='Specify the label encoder path to use.',
               default=os.path.join(orca_params.OUTPUT_PATH,
-                                    'label_encoder_latest.p'), 
+                                   'label_encoder_latest.p'),
               show_default=True)
 @click.option('--weights-path',
               help='Specify the weights path to use.',
-              default=os.path.join(orca_params.OUTPUT_PATH,
-                                   'orca_weights_latest.hdf5'),
+              default=os.path.join(orca_params.OUTPUT_PATH, orca_params.DEFAULT_MODEL_NAME,
+                                   'weights.best.hdf5'),
               show_default=True)
 @click.option('--verbose',
               help='Sets the ffmpeg logs verbosity.',
@@ -151,7 +169,7 @@ def live_feed_inference(model_name,
                         weights_path,
                         verbose,
                         live_feed_path=orca_params.LIVE_FEED_PATH,
-                        positive_samples_path=orca_params.POSITIVE_SAMPLES_PATH):
+                        positive_input_samples_path=orca_params.POSITIVE_INPUT_PATH):
     """
     Connects to specified audio stream(s) in the `ORCASOUND_STREAMS` dictionary, and records audio segments in iterations 
     and performs inference on the recorded data.
@@ -171,14 +189,15 @@ def live_feed_inference(model_name,
 
     # Create the network first
 
-    model, encoder = create_network(model_name, label_encoder_path, weights_path)
+    model, encoder = create_network(
+        model_name, label_encoder_path, weights_path)
 
     counter = 0
 
     while True:
         positive_sample = ''
         positive_samples = glob.glob(
-            os.path.join(positive_samples_path, '*.wav'))
+            os.path.join(positive_input_samples_path, '*.wav'))
 
         if len(positive_samples) > 0:
             positive_sample = positive_samples[0]
@@ -195,7 +214,8 @@ def live_feed_inference(model_name,
                 latest = f'{_stream_base}/latest.txt'
                 stream_id = urllib.request.urlopen(
                     latest).read().decode("utf-8").replace('\n', '')
-                stream_url = f'{_stream_base}/hls/{stream_id}/live.m3u8'
+                stream_url = '{}/hls/{}/live.m3u8'.format(
+                    (_stream_base), (stream_id))
 
                 recording_samples_path = os.path.join(
                     live_feed_path, str(counter % 2))
@@ -221,7 +241,8 @@ def live_feed_inference(model_name,
                 print(f'Unable to load stream from {stream_url}')
 
         results = _perform_inference(model, encoder, inference_samples_path)
-        print(results)
+        if len(results) > 0:
+            print(results)
 
         _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
 

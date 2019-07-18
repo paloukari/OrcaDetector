@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/orca_detector/orca.py",
             "console": "integratedTerminal",
-            "args": [ "train"],
+            "args": [ "infer-live"],
             "cwd": "${workspaceFolder}/orca_detector/", 
         },
         {

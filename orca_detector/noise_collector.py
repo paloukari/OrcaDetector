@@ -51,7 +51,7 @@ def collect_noise(data_path=orca_params.DATA_PATH):
                 latest = f'{stream_base}/latest.txt'
                 stream_id = urllib.request.urlopen(latest).read().decode("utf-8").replace('\n','') 
                 stream_url = f'{stream_base}/hls/{stream_id}/live.m3u8'
-                output_path = os.path.join(data_path, 'Noise/', stream_name)
+                output_path = os.path.join(data_path, orca_params.NOISE_CLASS, stream_name)
                 stream_obj = m3u8.load(stream_url)
                 # pick a single audio segment from the stream
                 if len(stream_obj.segments) > 0:
