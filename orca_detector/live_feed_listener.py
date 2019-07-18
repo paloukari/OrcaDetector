@@ -156,6 +156,7 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
                                    'weights.best.hdf5'),
               show_default=True)
 @click.option('--probability-threshold',
+              type=float,
               help='Specify the minimum inference probability for the positive results.',
               default=orca_params.LIVE_FEED_MINIMUM_INFERENCE_PROBABILITY,
               show_default=True)

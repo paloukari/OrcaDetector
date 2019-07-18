@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/orca_detector/orca.py",
             "console": "integratedTerminal",
-            "args": [ "infer-live"],
+            "args": [ "infer-live", "--probability-threshold=0.75"],
             "cwd": "${workspaceFolder}/orca_detector/", 
         },
         {
