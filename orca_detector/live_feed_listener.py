@@ -56,7 +56,7 @@ def _save_audio_segments(stream_url,
     os.system(ffmpeg_cli)
 
 
-def _perform_inference(model, encoder, inference_samples_path):
+def _perform_inference(model, encoder, inference_samples_path, probability_threshold):
     """
     Reads all *.wav audio segments in the specified folder, extracts the features
     performs inference and finally deletes the files. The files will be either 
@@ -101,7 +101,7 @@ def _perform_inference(model, encoder, inference_samples_path):
         file_names = np.array([os.path.basename(file_name) for file_name in file_names])
         results = np.hstack((file_names.reshape(len(file_names), 1), results))
 
-        results = results[(results[:, [2]].astype(float) > orca_params.LIVE_FEED_MINIMUM_INFERENCE_PROBABILITY).ravel()
+        results = results[(results[:, [2]].astype(float) > probability_threshold).ravel()
                                    & (results[:, [1]] != orca_params.NOISE_CLASS).ravel()]
 
         if len(results) > 0:
@@ -155,6 +155,10 @@ def _perform_inference(model, encoder, inference_samples_path):
               default=os.path.join(orca_params.OUTPUT_PATH, orca_params.DEFAULT_MODEL_NAME,
                                    'weights.best.hdf5'),
               show_default=True)
+@click.option('--probability-threshold',
+              help='Specify the minimum inference probability for the positive results.',
+              default=orca_params.LIVE_FEED_MINIMUM_INFERENCE_PROBABILITY,
+              show_default=True)
 @click.option('--verbose',
               help='Sets the ffmpeg logs verbosity.',
               show_default=True,
@@ -167,6 +171,7 @@ def live_feed_inference(model_name,
                         iteration_seconds,
                         label_encoder_path,
                         weights_path,
+                        probability_threshold,
                         verbose,
                         live_feed_path=orca_params.LIVE_FEED_PATH,
                         positive_input_samples_path=orca_params.POSITIVE_INPUT_PATH):
@@ -240,7 +245,7 @@ def live_feed_inference(model_name,
             except:
                 print(f'Unable to load stream from {stream_url}')
 
-        results = _perform_inference(model, encoder, inference_samples_path)
+        results = _perform_inference(model, encoder, inference_samples_path, probability_threshold)
         if len(results) > 0:
             print(results)
 
