@@ -69,8 +69,9 @@ def create_network(model_name, encoder_path, weights_path):
               show_default=True)
 @click.option('--weights-path',
               help='Specify the weights path to use.', 
-              default=os.path.join(orca_params.OUTPUT_PATH,
-                                    'orca_weights_latest.hdf5'), 
+              default=os.path.join(orca_params.OUTPUT_PATH, 
+                                   orca_params.DEFAULT_MODEL_NAME,
+                                   'weights.best.hdf5'), 
               show_default=True)
 @click.option('--predict-only',
               help='Run inference for unlabeled audio.',
