@@ -21,10 +21,15 @@ class DatasetType(IntEnum):
 # Paths to key volumes mapped into the Docker container
 DATA_PATH = '/data/'
 LIVE_FEED_PATH = '/data/live_feed/'
-POSITIVE_SAMPLES_PATH = '/data/positive_samples/'
+POSITIVE_INPUT_PATH = '/data/positive_input/'
+DETECTIONS_PATH = '/results/detections/'
 OUTPUT_PATH = '/results/'
 WEIGHTS_PATH = '/vggish_weights/vggish_audioset_weights_without_fc2.h5'
 WEIGHTS_PATH_TOP = '/vggish_weights/vggish_audioset_weights.h5'
+BEST_WEIGHT_FILE_NAME = 'weights.best.hdf5'
+TENSORBOARD_BASE_FOLDER = 'tensorboard'
+
+
 
 # Classification params
 OTHER_CLASS = 'Other'
@@ -52,7 +57,7 @@ REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
                  ]
 
 LOSS = 'categorical_crossentropy'
-EPOCHS = 10
+EPOCHS = 100
 BATCH_SIZE = 64
 MODEL_NAMES = ['vggish', 'logreg']
 DEFAULT_MODEL_NAME = 'vggish'
@@ -68,6 +73,9 @@ L2_REG_RATE = 0.01  # used for all Dense and Conv2D layers
 LOGREG_OPTIMIZER = 'adam'
 LOGREG_LEARNING_RATE = 0.005
 
+# EarlyStopping
+EARLY_STOPPING_PATIENCE = 10
+
 # Mel spectrogram hyperparameters
 FILE_MAX_SIZE_SECONDS = 10.00
 FILE_SAMPLING_SIZE_SECONDS = 0.98
@@ -77,6 +85,8 @@ DROPOUT = 0.4
 LIVE_FEED_SEGMENT_SECONDS = 1
 LIVE_FEED_SLEEP_SECONDS = 0
 LIVE_FEED_ITERATION_SECONDS = 10
+LIVE_FEED_MINIMUM_INFERENCE_PROBABILITY = 0.75
+NOISE_CLASS = 'Noise'
 
 # TODO: Verify this is fixed to this value
 LIVE_FEED_SAMPLING_RATE = 48000

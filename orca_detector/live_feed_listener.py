@@ -7,11 +7,13 @@ W251 (Summer 2019) - Spyros Garyfallos, Ram Iyer, Mike Winton
 """
 
 import click
+import datetime
 import glob
 import m3u8
 import numpy as np
 import orca_params
 import os
+import pandas as pd 
 import random
 import shutil
 import time
@@ -20,6 +22,8 @@ import urllib.request
 from threading import Thread
 from database_parser import extract_segment_features
 from inference import create_network
+
+POSITIVE_INFERENCE_TIMESTAMP = datetime.datetime.now().isoformat('-')
 
 
 def _save_audio_segments(stream_url,
@@ -39,21 +43,20 @@ def _save_audio_segments(stream_url,
 
     file_name = f"{stream_name}_%02d.wav"
     output_file = os.path.join(output_path, file_name)
-    mix_with = ''
 
+    mix_with_command = ''
     if os.path.exists(mix_with):
-        mix_with = '-i {} -filter_complex amix=inputs=2:duration=first'.format(
-            (mix_with))
+        print(f'Mixing with {mix_with}')
+        mix_with_command = f'-i {mix_with} -filter_complex amix=inputs=2:duration=first'
 
-    ffmpeg_cli = 'ffmpeg -y -i {} {} -t {} -f segment -segment_time {} {}'.format(
-        (stream_url), (mix_with), (iteration_seconds), (segment_seconds), (output_file))
+    ffmpeg_cli = f'ffmpeg -y -i {stream_url} {mix_with_command} -t {iteration_seconds} -f segment -segment_time {segment_seconds} {output_file}'
 
     if not verbose:
-        ffmpeg_cli = ffmpeg_cli + ' -loglevel warning'
+        ffmpeg_cli = ffmpeg_cli + ' -loglevel error'
     os.system(ffmpeg_cli)
 
 
-def _perform_inference(model, encoder, inference_samples_path):
+def _perform_inference(model, encoder, inference_samples_path, probability_threshold):
     """
     Reads all *.wav audio segments in the specified folder, extracts the features
     performs inference and finally deletes the files. The files will be either 
@@ -62,7 +65,7 @@ def _perform_inference(model, encoder, inference_samples_path):
     To simulate an orca, drop some positive 1 second samples in the folder.
     """
 
-    results = None
+    results = []
     try:
         audio_segments = glob.glob(
             os.path.join(inference_samples_path, '*.wav'))
@@ -91,16 +94,30 @@ def _perform_inference(model, encoder, inference_samples_path):
         results = model.predict(x=x,
                                 batch_size=orca_params.BATCH_SIZE,
                                 verbose=1)
-        results = np.array([[encoder.classes_[np.argmax(i)], np.max(i)] for i in results])
+        results = np.array(
+            [[encoder.classes_[np.argmax(i)], np.max(i)] for i in results])
         # Add the filenames
         file_names = features[:, 0]
+        file_names = np.array([os.path.basename(file_name) for file_name in file_names])
         results = np.hstack((file_names.reshape(len(file_names), 1), results))
+
+        results = results[(results[:, [2]].astype(float) > probability_threshold).ravel()
+                                   & (results[:, [1]] != orca_params.NOISE_CLASS).ravel()]
+
+        if len(results) > 0:
+            destination_folder = os.path.join(
+                orca_params.DETECTIONS_PATH, POSITIVE_INFERENCE_TIMESTAMP)
+            shutil.copytree(inference_samples_path, destination_folder)
+            print(f'Copied positive inference results at:{destination_folder}')
+            pd.DataFrame(results).to_csv(os.path.join(destination_folder, "results.csv"))
+
         shutil.rmtree(inference_samples_path)
     except:
         print('Unable to perform inference for {}'.format(
             (inference_samples_path)))
 
     return results
+
 
 @click.command(help="Performs inference on the specified OrcaSound Live Feed source(s).",
                epilog=orca_params.EPILOGUE)
@@ -128,14 +145,19 @@ def _perform_inference(model, encoder, inference_samples_path):
               show_default=True,
               default=orca_params.LIVE_FEED_ITERATION_SECONDS)
 @click.option('--label-encoder-path',
-              help='Specify the label encoder path to use.', 
+              help='Specify the label encoder path to use.',
               default=os.path.join(orca_params.OUTPUT_PATH,
-                                    'label_encoder_latest.p'), 
+                                   'label_encoder_latest.p'),
               show_default=True)
 @click.option('--weights-path',
               help='Specify the weights path to use.',
-              default=os.path.join(orca_params.OUTPUT_PATH,
-                                   'orca_weights_latest.hdf5'),
+              default=os.path.join(orca_params.OUTPUT_PATH, orca_params.DEFAULT_MODEL_NAME,
+                                   'weights.best.hdf5'),
+              show_default=True)
+@click.option('--probability-threshold',
+              type=float,
+              help='Specify the minimum inference probability for the positive results.',
+              default=orca_params.LIVE_FEED_MINIMUM_INFERENCE_PROBABILITY,
               show_default=True)
 @click.option('--verbose',
               help='Sets the ffmpeg logs verbosity.',
@@ -149,9 +171,10 @@ def live_feed_inference(model_name,
                         iteration_seconds,
                         label_encoder_path,
                         weights_path,
+                        probability_threshold,
                         verbose,
                         live_feed_path=orca_params.LIVE_FEED_PATH,
-                        positive_samples_path=orca_params.POSITIVE_SAMPLES_PATH):
+                        positive_input_samples_path=orca_params.POSITIVE_INPUT_PATH):
     """
     Connects to specified audio stream(s) in the `ORCASOUND_STREAMS` dictionary, and records audio segments in iterations 
     and performs inference on the recorded data.
@@ -171,21 +194,22 @@ def live_feed_inference(model_name,
 
     # Create the network first
 
-    model, encoder = create_network(model_name, label_encoder_path, weights_path)
+    model, encoder = create_network(
+        model_name, label_encoder_path, weights_path)
 
     counter = 0
 
     while True:
-        positive_sample = ''
+        mix_with = ''
         positive_samples = glob.glob(
-            os.path.join(positive_samples_path, '*.wav'))
+            os.path.join(positive_input_samples_path, '*.wav'))
 
         if len(positive_samples) > 0:
-            positive_sample = positive_samples[0]
+            mix_with = positive_samples[0]
 
         counter = counter + 1
+        
         threads = []
-
         for _stream_name, _stream_base in orca_params.ORCASOUND_STREAMS.items():
             if stream_name != 'All' and stream_name != _stream_name:
                 continue
@@ -195,7 +219,8 @@ def live_feed_inference(model_name,
                 latest = f'{_stream_base}/latest.txt'
                 stream_id = urllib.request.urlopen(
                     latest).read().decode("utf-8").replace('\n', '')
-                stream_url = f'{_stream_base}/hls/{stream_id}/live.m3u8'
+                stream_url = '{}/hls/{}/live.m3u8'.format(
+                    (_stream_base), (stream_id))
 
                 recording_samples_path = os.path.join(
                     live_feed_path, str(counter % 2))
@@ -212,7 +237,7 @@ def live_feed_inference(model_name,
                                                                    _stream_name,
                                                                    segment_seconds,
                                                                    iteration_seconds,
-                                                                   positive_sample,
+                                                                   mix_with,
                                                                    recording_samples_path,
                                                                    verbose, ))
                 threads.append(thread)
@@ -220,14 +245,15 @@ def live_feed_inference(model_name,
             except:
                 print(f'Unable to load stream from {stream_url}')
 
-        results = _perform_inference(model, encoder, inference_samples_path)
-        print(results)
+        results = _perform_inference(model, encoder, inference_samples_path, probability_threshold)
+        if len(results) > 0:
+            print(results)
 
         _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
 
-        if os.path.exists(positive_sample):
-            os.remove(positive_sample)
-            print(f'{positive_sample} deleted.')
+        if os.path.exists(mix_with):
+            os.remove(mix_with)
+            print(f'{mix_with} deleted.')
 
         if sleep_seconds > 0:
             print(
