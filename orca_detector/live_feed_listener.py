@@ -205,69 +205,63 @@ def live_feed_inference(model_name,
 
     counter = 0
 
-    try:
-        while True:
-            mix_with = ''
-            positive_samples = glob.glob(
-                os.path.join(positive_input_samples_path, '*.wav'))
+    while True:
+        mix_with = ''
+        positive_samples = glob.glob(
+            os.path.join(positive_input_samples_path, '*.wav'))
 
-            if len(positive_samples) > 0:
-                mix_with = positive_samples[0]
+        if len(positive_samples) > 0:
+            mix_with = positive_samples[0]
 
-            counter = counter + 1
+        counter = counter + 1
 
-            threads = []
-            for _stream_name, _stream_base in orca_params.ORCASOUND_STREAMS.items():
-                if stream_name != 'All' and stream_name != _stream_name:
-                    continue
+        threads = []
+        for _stream_name, _stream_base in orca_params.ORCASOUND_STREAMS.items():
+            if stream_name != 'All' and stream_name != _stream_name:
+                continue
 
-                try:
-                    # get the ID of the latest stream and build URL to load
-                    latest = f'{_stream_base}/latest.txt'
-                    stream_id = urllib.request.urlopen(
-                        latest).read().decode("utf-8").replace('\n', '')
-                    stream_url = '{}/hls/{}/live.m3u8'.format(
-                        (_stream_base), (stream_id))
+            try:
+                # get the ID of the latest stream and build URL to load
+                latest = f'{_stream_base}/latest.txt'
+                stream_id = urllib.request.urlopen(
+                    latest).read().decode("utf-8").replace('\n', '')
+                stream_url = '{}/hls/{}/live.m3u8'.format(
+                    (_stream_base), (stream_id))
 
-                    recording_samples_path = os.path.join(
-                        live_feed_path, str(counter % 2))
-                    inference_samples_path = os.path.join(
-                        live_feed_path, str((counter+1) % 2))
+                recording_samples_path = os.path.join(
+                    live_feed_path, str(counter % 2))
+                inference_samples_path = os.path.join(
+                    live_feed_path, str((counter+1) % 2))
 
-                    # make sure the folders exist
-                    if not os.path.exists(recording_samples_path):
-                        os.makedirs(recording_samples_path)
-                    if not os.path.exists(inference_samples_path):
-                        os.makedirs(inference_samples_path)
+                # make sure the folders exist
+                if not os.path.exists(recording_samples_path):
+                    os.makedirs(recording_samples_path)
+                if not os.path.exists(inference_samples_path):
+                    os.makedirs(inference_samples_path)
 
-                    thread = Thread(target=_save_audio_segments, args=(stream_url,
-                                                                       _stream_name,
-                                                                       segment_seconds,
-                                                                       iteration_seconds,
-                                                                       mix_with,
-                                                                       recording_samples_path,
-                                                                       verbose, ))
-                    threads.append(thread)
-                    thread.start()
-                except:
-                    print(f'Unable to load stream from {stream_url}')
+                thread = Thread(target=_save_audio_segments, args=(stream_url,
+                                                                   _stream_name,
+                                                                   segment_seconds,
+                                                                   iteration_seconds,
+                                                                   mix_with,
+                                                                   recording_samples_path,
+                                                                   verbose, ))
+                threads.append(thread)
+                thread.start()
+            except:
+                print(f'Unable to load stream from {stream_url}')
 
-            results = _perform_inference(model, encoder, inference_samples_path, probability_threshold)
-            if len(results) > 0:
-                print(results)
+        results = _perform_inference(model, encoder, inference_samples_path, probability_threshold)
+        if len(results) > 0:
+            print(results)
 
-            _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
+        _ = [t.join(orca_params.LIVE_FEED_ITERATION_SECONDS) for t in threads]
 
-            if os.path.exists(mix_with):
-                os.remove(mix_with)
-                print(f'{mix_with} deleted.')
+        if os.path.exists(mix_with):
+            os.remove(mix_with)
+            print(f'{mix_with} deleted.')
 
-            if sleep_seconds > 0:
-                print(
-                    f'Sleeping for {sleep_seconds} seconds before starting next interation.\n')
-                time.sleep(sleep_seconds)
-
-    except KeyboardInterrupt:
-        print('Received CTRL-C request to abort.  BYE!')
-        sys.exit(1)
+        if sleep_seconds > 0:
+            print(f'Sleeping for {sleep_seconds} seconds before starting next interation.\n')
+            time.sleep(sleep_seconds)
         
