@@ -259,11 +259,14 @@ There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the tr
 
 ### Perform Live Feed inference
 
-With this network, you can perform Live Feed inference on the [Orca Sound Hydrophones](http://live.orcasound.net/). The following command will periodically (10 sec default) print the inference species results.
+With this network, you can perform Live Feed inference on the [Orca Sound Hydrophones](http://live.orcasound.net/). The following command will periodically (10 sec default) print the inference species results.  In order to reduce the number of false positives when listening to a real live stream, the default probability threshhold is set to 0.75.
 
+
+To begin running inference on a live stream:
 
 ```
-python3 orca.py infer-live
+python3 orca.py infer-live \
+  --probability-threshold 0.5  
 ```
 
 The allowed options are:
@@ -276,19 +279,21 @@ Usage: orca.py infer-live [OPTIONS]
 Options:
   --model-name [vggish|logreg]    Specify the model name to use.  [default:
                                   vggish]
-  --stream-name [BushPoint|OrcasoundLab|PortTownsend|All]
+  --stream-name [PortTownsend|OrcasoundLab|BushPoint|All]
                                   Specify the hydrophone live feed stream to
-                                  listen to.  [default: All]
+                                  listen to.  [default: OrcasoundLab]
   --segment-seconds INTEGER       Defines how many seconds each audio segment
                                   will be.  [default: 1]
   --sleep-seconds INTEGER         Seconds to sleep between each iteration.
                                   [default: 0]
   --iteration-seconds INTEGER     Total seconds for each iteration.  [default:
                                   10]
-  --label-encoder-path TEXT       Specify the label encoder to use.  [default:
-                                  /results/label_encoder_latest.p]
+  --label-encoder-path TEXT       Specify the label encoder path to use.
+                                  [default: /results/label_encoder_latest.p]
   --weights-path TEXT             Specify the weights path to use.  [default:
-                                  /results/orca_weights_latest.hdf5]
+                                  /results/vggish/weights.best.hdf5]
+  --probability-threshold FLOAT   Specify the minimum inference probability
+                                  for the positive results.  [default: 0.75]
   --verbose                       Sets the ffmpeg logs verbosity.  [default:
                                   False]
   --help                          Show this message and exit.
