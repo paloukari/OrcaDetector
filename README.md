@@ -315,15 +315,15 @@ Usage: orca.py infer [OPTIONS]
   Performs inference on a test set (labeled or unlabeled).
 
 Options:
-  --model-name [vggish|logreg]    Specify the model name to use.  [default:
-                                  vggish]
-  --label-encoder-path TEXT       Specify the label encoder to use.  [default:
-                                  /results/label_encoder_latest.p]
-  --weights-path TEXT             Specify the weights path to use.  [default:
-                                  /results/orca_weights_latest.hdf5]
-  --predict-only                  Sets the flag indicating there are no ground
-                                  truth labels.  [default: False]
-  --help                          Show this message and exit.
+  --model-name [vggish|logreg]  Specify the model name to use.  [default:
+                                vggish]
+  --label-encoder-path TEXT     Specify the label encoder path to use.
+                                [default: /results/label_encoder_latest.p]
+  --weights-path TEXT           Specify the weights path to use.  [default:
+                                /results/vggish/weights.best.hdf5]
+  --predict-only                Run inference for unlabeled audio.  [default:
+                                False]
+  --help                        Show this message and exit.
 
   by Spyros Garyfallos, Ram Iyer, Mike Winton
 ```
