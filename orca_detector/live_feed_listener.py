@@ -129,7 +129,7 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
                   choices=orca_params.MODEL_NAMES))
 @click.option('--stream-name',
               help='Specify the hydrophone live feed stream to listen to.',
-              default='All',
+              default=orca_params.ORCASOUND_DEFAULT_STREAM_NAME,
               show_default=True,
               type=click.Choice(orca_params.ORCASOUND_STREAMS_NAMES))
 @click.option('--segment-seconds',
