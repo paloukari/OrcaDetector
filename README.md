@@ -261,6 +261,7 @@ There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the tr
 
 With this network, you can perform Live Feed inference on the [Orca Sound Hydrophones](http://live.orcasound.net/). The following command will periodically (10 sec default) print the inference species results.  In order to reduce the number of false positives when listening to a real live stream, the default probability threshhold is set to 0.75.
 
+If the symbolic link `/results/vggish/weights.best.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `/results/label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
 
 To begin running inference on a live stream:
 
@@ -303,7 +304,7 @@ Options:
 
 ### Running inference with labeled test set
 
-If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
+If the symbolic link `/results/vggish/weights.best.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `/results/label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
 
 ```
 python3 orca.py \
