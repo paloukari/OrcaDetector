@@ -114,7 +114,7 @@ Run the `orca_dev` Docker container with the following args.
 > NOTE: update the host volume mappings (i.e. `~/OrcaDetector`) as appropriate for your machine in the following script:
 
 ```
-sudo docker run \
+docker run \
     --rm \
     --runtime=nvidia \
     --name orca_dev \
@@ -173,7 +173,7 @@ We are recording audio samples from the following hydrophone live streams as bac
 The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  Spin up a separate `orca_dev` Docker container instance:
 
 ```
-sudo docker run \
+docker run \
     --rm \
     --name noise_collector \
     -tid \
@@ -185,7 +185,7 @@ sudo docker run \
 Then kick off the process:
 
 ```
-sudo docker exec -it noise_collector bash
+docker exec -it noise_collector bash
 cd orca_detector
 python3 orca.py collect-noise
 ```
@@ -240,6 +240,11 @@ Options:
 
 ```
 
+During training, you can bring up Tensorboard by issuing the following command from within the Docker container (port 4040 is mapped to the host):
+
+```
+tensorboard --logdir=/src/results/tensorboard/vggish --port 4040
+```
 
 After training has completed, several timestamped files will be written to disk:
 
