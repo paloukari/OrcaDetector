@@ -34,7 +34,7 @@ TENSORBOARD_BASE_FOLDER = 'tensorboard'
 # Classification params
 OTHER_CLASS = 'Other'
 OTHER_CLASSES = []
-REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
+REMOVE_CLASSES = [#'BeardedSeal',  # (NEED TO UNDERSTAND)
                   'BlueWhale',  # 3 training samples
                   'CommersonsDolphin',  # 1 training sample
                   'FinlessPorpoise',  # 2 training samples
@@ -44,13 +44,13 @@ REMOVE_CLASSES = ['BeardedSeal',  # (NEED TO UNDERSTAND)
                   'HoodedSeal',  # 2 training samples
                   'IrawaddyDolphin',  # 5 training samples
                   'JuanFernandezFurSeal',  # 4 training samples
-                  'LeopardSeal',  # (NEED TO UNDERSTAND)
+                  #'LeopardSeal',  # (NEED TO UNDERSTAND)
                   'MinkeWhale',  # 24 training samples
                   'NewZealandFurSeal',  # 2 training samples
                   'RibbonSeal',  # 45 training samples
                   'RingedSeal',  # 46 training samples
                   'SeaOtter',  # 2 training samples
-                  'Short_FinnedPacificPilotWhale',  # (NEED TO UNDERSTAND)
+                  #'Short_FinnedPacificPilotWhale',  # (NEED TO UNDERSTAND)
                   'SpottedSeal',  # 22 training samples
                   'StellerSeaLion',  # 6 training samples
                   'TucuxiDolphin'  # 12 training samples
@@ -99,3 +99,13 @@ ORCASOUND_STREAMS = {
 }
 
 ORCASOUND_STREAMS_NAMES = list(ORCASOUND_STREAMS.keys()) + ['All']
+ORCASOUND_DEFAULT_STREAM_NAME = 'OrcasoundLab'
+
+# These values affect mixing of live stream and positive samples
+# TODO: consider dynamically determining these ratios.
+MAMMAL_MIXING_VOLUME = 1.8  # Optimized for KillerWhale
+ORCASOUND_MIXING_VOLUME = {
+    'OrcasoundLab': 0.036,
+    'BushPoint': 0.18,
+    'PortTownsend': 0.036  # TODO: optimize this (new audio stream)
+}
