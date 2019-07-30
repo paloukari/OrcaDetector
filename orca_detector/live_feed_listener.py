@@ -16,6 +16,7 @@ import os
 import pandas as pd 
 import random
 import shutil
+import sys
 import time
 import uuid
 import urllib.request
@@ -112,9 +113,14 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
             pd.DataFrame(results).to_csv(os.path.join(destination_folder, "results.csv"))
 
         shutil.rmtree(inference_samples_path)
-    except:
-        print('Unable to perform inference for {}'.format(
-            (inference_samples_path)))
+    except KeyboardInterrupt:
+        print('Received CTRL-C request to abort. BYE!')
+        sys.exit(1)
+
+# TODO: catch a specific exception here.  Otherwise we can't exit with sys.exit().
+#     except:
+#         print('Unable to perform inference for {}'.format(
+#             (inference_samples_path)))
 
     return results
 
@@ -129,7 +135,7 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
                   choices=orca_params.MODEL_NAMES))
 @click.option('--stream-name',
               help='Specify the hydrophone live feed stream to listen to.',
-              default='All',
+              default=orca_params.ORCASOUND_DEFAULT_STREAM_NAME,
               show_default=True,
               type=click.Choice(orca_params.ORCASOUND_STREAMS_NAMES))
 @click.option('--segment-seconds',
@@ -208,7 +214,7 @@ def live_feed_inference(model_name,
             mix_with = positive_samples[0]
 
         counter = counter + 1
-        
+
         threads = []
         for _stream_name, _stream_base in orca_params.ORCASOUND_STREAMS.items():
             if stream_name != 'All' and stream_name != _stream_name:
@@ -256,6 +262,6 @@ def live_feed_inference(model_name,
             print(f'{mix_with} deleted.')
 
         if sleep_seconds > 0:
-            print(
-                f'Sleeping for {sleep_seconds} seconds before starting next interation.\n')
+            print(f'Sleeping for {sleep_seconds} seconds before starting next interation.\n')
             time.sleep(sleep_seconds)
+        

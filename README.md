@@ -114,7 +114,7 @@ Run the `orca_dev` Docker container with the following args.
 > NOTE: update the host volume mappings (i.e. `~/OrcaDetector`) as appropriate for your machine in the following script:
 
 ```
-sudo docker run \
+docker run \
     --rm \
     --runtime=nvidia \
     --name orca_dev \
@@ -173,7 +173,7 @@ We are recording audio samples from the following hydrophone live streams as bac
 The following command will collect a single sample (~11 seconds long), randomly every 1-15 minutes indefinitely while the script is running.  Spin up a separate `orca_dev` Docker container instance:
 
 ```
-sudo docker run \
+docker run \
     --rm \
     --name noise_collector \
     -tid \
@@ -185,7 +185,7 @@ sudo docker run \
 Then kick off the process:
 
 ```
-sudo docker exec -it noise_collector bash
+docker exec -it noise_collector bash
 cd orca_detector
 python3 orca.py collect-noise
 ```
@@ -240,6 +240,11 @@ Options:
 
 ```
 
+During training, you can bring up Tensorboard by issuing the following command from within the Docker container (port 4040 is mapped to the host):
+
+```
+tensorboard --logdir=/src/results/tensorboard/vggish --port 4040
+```
 
 After training has completed, several timestamped files will be written to disk:
 
@@ -254,11 +259,15 @@ There will also be a symbolic link `orca_weights_latest.hdf5` pointing to the tr
 
 ### Perform Live Feed inference
 
-With this network, you can perform Live Feed inference on the [Orca Sound Hydrophones](http://live.orcasound.net/). The following command will periodically (10 sec default) print the inference species results.
+With this network, you can perform Live Feed inference on the [Orca Sound Hydrophones](http://live.orcasound.net/). The following command will periodically (10 sec default) print the inference species results.  In order to reduce the number of false positives when listening to a real live stream, the default probability threshhold is set to 0.75.
 
+If the symbolic link `/results/vggish/weights.best.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `/results/label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
+
+To begin running inference on a live stream:
 
 ```
-python3 orca.py infer-live
+python3 orca.py infer-live \
+  --probability-threshold 0.5  
 ```
 
 The allowed options are:
@@ -271,19 +280,21 @@ Usage: orca.py infer-live [OPTIONS]
 Options:
   --model-name [vggish|logreg]    Specify the model name to use.  [default:
                                   vggish]
-  --stream-name [BushPoint|OrcasoundLab|PortTownsend|All]
+  --stream-name [PortTownsend|OrcasoundLab|BushPoint|All]
                                   Specify the hydrophone live feed stream to
-                                  listen to.  [default: All]
+                                  listen to.  [default: OrcasoundLab]
   --segment-seconds INTEGER       Defines how many seconds each audio segment
                                   will be.  [default: 1]
   --sleep-seconds INTEGER         Seconds to sleep between each iteration.
                                   [default: 0]
   --iteration-seconds INTEGER     Total seconds for each iteration.  [default:
                                   10]
-  --label-encoder-path TEXT       Specify the label encoder to use.  [default:
-                                  /results/label_encoder_latest.p]
+  --label-encoder-path TEXT       Specify the label encoder path to use.
+                                  [default: /results/label_encoder_latest.p]
   --weights-path TEXT             Specify the weights path to use.  [default:
-                                  /results/orca_weights_latest.hdf5]
+                                  /results/vggish/weights.best.hdf5]
+  --probability-threshold FLOAT   Specify the minimum inference probability
+                                  for the positive results.  [default: 0.75]
   --verbose                       Sets the ffmpeg logs verbosity.  [default:
                                   False]
   --help                          Show this message and exit.
@@ -293,7 +304,7 @@ Options:
 
 ### Running inference with labeled test set
 
-If the symbolic link `orca_weights_latest.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
+If the symbolic link `/results/vggish/weights.best.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `/results/label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
 
 ```
 python3 orca.py \
@@ -310,15 +321,15 @@ Usage: orca.py infer [OPTIONS]
   Performs inference on a test set (labeled or unlabeled).
 
 Options:
-  --model-name [vggish|logreg]    Specify the model name to use.  [default:
-                                  vggish]
-  --label-encoder-path TEXT       Specify the label encoder to use.  [default:
-                                  /results/label_encoder_latest.p]
-  --weights-path TEXT             Specify the weights path to use.  [default:
-                                  /results/orca_weights_latest.hdf5]
-  --predict-only                  Sets the flag indicating there are no ground
-                                  truth labels.  [default: False]
-  --help                          Show this message and exit.
+  --model-name [vggish|logreg]  Specify the model name to use.  [default:
+                                vggish]
+  --label-encoder-path TEXT     Specify the label encoder path to use.
+                                [default: /results/label_encoder_latest.p]
+  --weights-path TEXT           Specify the weights path to use.  [default:
+                                /results/vggish/weights.best.hdf5]
+  --predict-only                Run inference for unlabeled audio.  [default:
+                                False]
+  --help                        Show this message and exit.
 
   by Spyros Garyfallos, Ram Iyer, Mike Winton
 ```
