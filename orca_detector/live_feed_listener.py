@@ -46,7 +46,7 @@ def _save_audio_segments(stream_url,
     mix_with_name = ''
     if os.path.exists(mix_with):
         print(f'Mixing with {mix_with}')
-        mix_with_name = '_' + os.path.split(mix_with)[1].replace('.wav', '')
+        mix_with_name = '_' + os.path.split(mix_with)[1].lower().replace('.wav', '')
         mammal_vol = orca_params.MAMMAL_MIXING_VOLUME
         noise_vol = orca_params.ORCASOUND_MIXING_VOLUME[stream_name]
         mix_with_command = f'-i {mix_with} -filter_complex ' \
