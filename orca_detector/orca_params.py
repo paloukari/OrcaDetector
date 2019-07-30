@@ -100,3 +100,12 @@ ORCASOUND_STREAMS = {
 
 ORCASOUND_STREAMS_NAMES = list(ORCASOUND_STREAMS.keys()) + ['All']
 ORCASOUND_DEFAULT_STREAM_NAME = 'OrcasoundLab'
+
+# These values affect mixing of live stream and positive samples
+# TODO: consider dynamically determining these ratios.
+MAMMAL_MIXING_VOLUME = 1.8  # Optimized for KillerWhale
+ORCASOUND_MIXING_VOLUME = {
+    'OrcasoundLab': 0.036,
+    'BushPoint': 0.18,
+    'PortTownsend': 0.036  # TODO: optimize this (new audio stream)
+}

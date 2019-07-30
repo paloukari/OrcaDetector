@@ -48,9 +48,17 @@ def _save_audio_segments(stream_url,
     mix_with_command = ''
     if os.path.exists(mix_with):
         print(f'Mixing with {mix_with}')
-        mix_with_command = f'-i {mix_with} -filter_complex amix=inputs=2:duration=first'
+        mammal_vol = orca_params.MAMMAL_MIXING_VOLUME
+        noise_vol = orca_params.ORCASOUND_MIXING_VOLUME[stream_name]
+        mix_with_command = f'-i {mix_with} -filter_complex ' \
+                           f'"[0:0]volume={noise_vol}[a];[1:0]volume={mammal_vol}[b];' \
+                           '[a][b]amix=inputs=2:duration=first"'
 
-    ffmpeg_cli = f'ffmpeg -y -i {stream_url} {mix_with_command} -t {iteration_seconds} -f segment -segment_time {segment_seconds} {output_file}'
+    ffmpeg_cli = f'ffmpeg -y -i {stream_url} {mix_with_command} -t {iteration_seconds} ' \
+                 f'-f segment -segment_time {segment_seconds} {output_file}'
+    
+    # TODO: delete this print statement later
+    print(f'DEBUG - ffmpeg mixing command: {ffmpeg_cli}')
 
     if not verbose:
         ffmpeg_cli = ffmpeg_cli + ' -loglevel error'
@@ -116,11 +124,10 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
     except KeyboardInterrupt:
         print('Received CTRL-C request to abort. BYE!')
         sys.exit(1)
-
-# TODO: catch a specific exception here.  Otherwise we can't exit with sys.exit().
-#     except:
-#         print('Unable to perform inference for {}'.format(
-#             (inference_samples_path)))
+    except FileExistsError:
+        print('Thread collision; multiple threads processing same audio files.')
+        print('Unable to perform inference for {}'.format(
+            (inference_samples_path)))
 
     return results
 
