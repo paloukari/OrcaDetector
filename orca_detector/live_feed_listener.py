@@ -42,17 +42,19 @@ def _save_audio_segments(stream_url,
     The result 
     """
 
-    file_name = f"{stream_name}_%02d.wav"
-    output_file = os.path.join(output_path, file_name)
-
     mix_with_command = ''
+    mix_with_name = ''
     if os.path.exists(mix_with):
         print(f'Mixing with {mix_with}')
+        mix_with_name = '_' + os.path.split(mix_with)[1].replace('.wav', '')
         mammal_vol = orca_params.MAMMAL_MIXING_VOLUME
         noise_vol = orca_params.ORCASOUND_MIXING_VOLUME[stream_name]
         mix_with_command = f'-i {mix_with} -filter_complex ' \
                            f'"[0:0]volume={noise_vol}[a];[1:0]volume={mammal_vol}[b];' \
                            '[a][b]amix=inputs=2:duration=first"'
+
+    file_name = f"{stream_name}{mix_with_name}_%02d.wav"
+    output_file = os.path.join(output_path, file_name)
 
     ffmpeg_cli = f'ffmpeg -y -i {stream_url} {mix_with_command} -t {iteration_seconds} ' \
                  f'-f segment -segment_time {segment_seconds} {output_file}'
