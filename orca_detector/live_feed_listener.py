@@ -126,11 +126,8 @@ def _perform_inference(model, encoder, inference_samples_path, probability_thres
         sys.exit(1)
     except FileExistsError:
         print('Thread collision; multiple threads processing same audio files.')
-
-# TODO: catch a specific exception here.  Otherwise we can't exit with sys.exit().
-#     except:
-#         print('Unable to perform inference for {}'.format(
-#             (inference_samples_path)))
+        print('Unable to perform inference for {}'.format(
+            (inference_samples_path)))
 
     return results
 
