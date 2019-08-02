@@ -103,8 +103,18 @@ rm ./data.tar.gz
 aws s3 cp s3://w251-orca-detector-data/vggish_weights.tar.gz ./
 tar -xvf ./vggish_weights.tar.gz -C ./
 rm ./vggish_weights.tar.gz
+```
 
-docker build -t orca_dev -f ./orca_detector/Dockerfile.dev ./orca_detector
+To build the image in the cloud:
+
+```
+docker build -t orca_dev -f Dockerfile.dev .
+```
+
+To build the image on a TX2:
+
+```
+docker build -t orca_tx2 -f Dockerfile.tx2 .
 ```
 
 ## 4. Launch an `orca_dev` Docker container
@@ -128,6 +138,25 @@ docker run \
     -p 4040:4040 \
     -p 32001:22 \
     orca_dev
+```
+
+To run it on the TX2:
+
+```
+docker run \
+    --rm \
+    --name orca_dev \
+    -ti \
+    --privileged \
+    -e JUPYTER_ENABLE_LAB=yes \
+    -v ~/OrcaDetector:/src \
+    -v //media/mikew/ssd/orca/data:/data \
+    -v /media/mikew/ssd/orca/vggish_weights:/vggish_weights \
+    -v /media/mikew/ssd/orca/results:/results \
+    -p 8888:8888 \
+    -p 4040:4040 \
+    -p 32001:22 \
+    orca_tx2
 ```
 
 You will see it listed as `orca_dev ` when you run `docker ps -a`.  
@@ -263,11 +292,13 @@ With this network, you can perform Live Feed inference on the [Orca Sound Hydrop
 
 If the symbolic link `/results/vggish/weights.best.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `/results/label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
 
-To begin running inference on a live stream:
+To begin running inference on a live stream with our best weights and a probability threshold of 0.5:
 
 ```
 python3 orca.py infer-live \
-  --probability-threshold 0.5  
+  --probability-threshold 0.5 \
+  --weights-path /results/vggish/weights_058983.best.hdf5 \
+  --label-encoder-path /results/label_encoder_058983.p
 ```
 
 The allowed options are:
