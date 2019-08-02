@@ -292,11 +292,13 @@ With this network, you can perform Live Feed inference on the [Orca Sound Hydrop
 
 If the symbolic link `/results/vggish/weights.best.hdf5` points to the weights you want to use for inference, then you do not need to specify a path to the weights.  Similarly, if the symbolic link `/results/label_encoder_latest.p` points to the trained label encoder that you want to use, you do not need to specify a path to the label encoder.
 
-To begin running inference on a live stream:
+To begin running inference on a live stream with our best weights and a probability threshold of 0.5:
 
 ```
 python3 orca.py infer-live \
-  --probability-threshold 0.5  
+  --probability-threshold 0.5 \
+  --weights-path /results/vggish/weights_058983.best.hdf5 \
+  --label-encoder-path /results/label_encoder_058983.p
 ```
 
 The allowed options are:
