@@ -67,7 +67,7 @@ def _save_audio_segments(stream_url,
     os.system(ffmpeg_cli)
 
 
-def _perform_inference(model, encoder, inference_samples_path, probability_threshold):
+def perform_inference(model, encoder, inference_samples_path, probability_threshold):
     """
     Reads all *.wav audio segments in the specified folder, extracts the features
     performs inference and finally deletes the files. The files will be either 
@@ -260,7 +260,7 @@ def live_feed_inference(model_name,
             except:
                 print(f'Unable to load stream from {stream_url}')
 
-        results = _perform_inference(model, encoder, inference_samples_path, probability_threshold)
+        results = perform_inference(model, encoder, inference_samples_path, probability_threshold)
         if len(results) > 0:
             print(results)
 
