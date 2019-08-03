@@ -140,12 +140,49 @@ Furthermore, an accurate detection mechanism will allow the marine scientists to
 
 Researchers indicate that an audio spectrum up to 160 kHz will reveal new information from these species sounds that has not been yet studied. The required upstream bandwidth and cost for such hydrophones though is forbidding. This can be solved by an automated detector running on the edge and uploading only the sparse positive samples.
 
-## Background - Ram
+## Background for Audio Classification
 
-- how is audio classification generally done (audio -> image)?
-- what is a mel spectrogram
-- give a few different examples from the links we collected
-- what kind of accuracy has been demonstrated in similar use cases?
+### Representing Audio Signals
+
+Audio signals are typically represented by a 1D vector comprising of a time series of signal amplitudes. The translation of the analog audio signal to the 1D vector is done using [Pulse Code Modulation](https://en.wikipedia.org/wiki/Pulse-code_modulation). Two parameters of importance during the PCM process is the bit-depth and the sampling rate.
+
+![Sample Audio Signal](images/SampleAudioWave.png)
+
+- **Bit Depth** - Range of amplitude values that can be represented. For example a 16 bit bit depth implies that 2^16 (=65536) different values can be represented
+- **Sampling Rate** - Number of times the audio is sampled per second. A sampling rate of 44.1KHz implies that 44100 samples of the audio amplitude are recorded per second.
+
+So, for a 16bit depth audio, recorded at 44.1KHz for 4 seconds would comprise of 44100 * 4 = 176400 numbers, each with 2bytes, implying 352kb of data.
+
+### Audio Features for Machine Learning
+
+Machine Learning techniques have been successfully employed for classifying Audio signals. One approach is to directly use a Logistic regression or a CNN model directly on the 1D vector representing the audio signal. However, this approach does not take into account the human perception of audio and the time series aspects of an audio signal. More refined techniques work on a window around the audio signal and do feature extraction in the frequency domain which give a more robust set of features for the machine learning models to work with.
+
+### MEL Spectrogram
+
+Mel Frequency Cepstral Coefficents (MFCCs) are a feature widely used in automatic speech and speaker recognition. They were introduced by Davis and Mermelstein in the 1980's, and have been state-of-the-art ever since.
+The Mel Spectrogram attempts to model the characteristics of the human ear. It is observed that the human ear acts as a filter and concentrates only on certain frequency components and also gives more importance to lower frequency components as compared to higher frequency compnents. The Mel Spectrogram is constructed using Filter Banks each of which focus on a selected frequency range. The Image below shows an illustration of the Filter Banks.
+
+![Example of a MEL Filter Bank](images/MelFilterBank.png)
+
+Each of the filters focus on a frequency range. As can be seen the filters are more concentrated in the lower frequency range and get sparse at the higher frequency range.
+
+The flow used to convert the Audio signal to the Mel Spectrogram is illustrated below. More details of the process can be found in this [excellent tutorial](https://archive.org/details/SpectrogramCepstrumAndMel-frequency_636522) from CMU.
+
+![Audio file to Mel Spectrogram Conversion](images/AudioToMel.png)
+
+The below diagrams illustrate the audio signal and their mel spectrogram for some samples from our dataset
+
+- Killer Whale - Sample Audio/Mel Features
+
+![Killer Whale Audio Sample](images/KillerWhaleAudio.png)
+
+![Killer Whale Mel Spectrogram](images/KillerWhaleMel.png)
+
+- Humpback Whale - Sample Audio/Mel Features
+
+![Humpback Whale Audio Sample](images/HumpbackWhaleAudio.png)
+
+![Humpback Whale Mel Spectrogram](images/HumpbackWhaleMel.png)
 
 ## Current Contributions
 
@@ -214,9 +251,26 @@ We stratified the remaining samples in three statas:
 - selected EDA plots - Ram
 - choice of species what were included vs. excluded (based on too few training samples) - Mike
 
-### EDA - Ram
+### EDA
 
-- pick interesting plots from the EDA notebook and insert here
+The audio samples in the dataset are not evenly distributed among the different species. The plot below shows the distribution of the number of samples per species.
+
+![Distribution of Audio Samples by number of Samples](images/EDASpeciesHistogram.png)
+
+This lead us to remove some species which are under-represented in terms of number of samples.
+
+92% of all the audio samples have been recorded for less than 10seconds and 85% of all the samples are 5 seconds or below in duration.
+
+![Distribution of Audio Length](images/HistogramAudioSamples.png)
+
+To have a uniform sample duration, we derived quantized samples of fixed size audio files of close to 1 second in duration. For example given a 5 second original audio sample, 5 quantized samples with the same training label were created.
+
+Since the audio data were recorded over a period of several years and across different geographies and equipment, there is a large variety of sampling rates employed. The plot below shows the distribution of sampling rates used.
+
+![Distribution of Sampling rates](images/HistogramSamplingRate.png)
+
+For our MEL feature extraction, we resample the audio at a fixed rate of 16kHz for a consistent treatment across the audio samples.
+
 
 ### Experimental Results
 
@@ -264,10 +318,14 @@ These live hydrophone sources are broadcasted online using the [HTTP Live Stream
 
 To mitigate the Orcas vocalization sparsity, we added to the inference program an ad-hoc mixing capability that injected a predefined Orca sound into the live hydrophones stream. We found this approach very useful as a testing pipeline that validates a positive detection inference on a known positive sample, and conversely, a negative detection on noise samples. This approach can be very useful in continuous delivery pipelines of newly trained networks, especially for Edge scenarios.
 
-## Simulation - Ram
+## Simulation
 
-- how Flash web app (or Jupyter notebook) works
-- include link to the notebook here
+We developed an interactive Simulation tool based on the Jupyter notebook ipyWidgets module. With this simulation tool the user can select different species from our dataset and listen to the sample audio. In addition they 
+
+### Link to notebook
+
+To run the simulations, please follow the link to the Jupyter notebook below
+[Notebook link](orca_detect_demo.ipynb)
 
 ## Conclusion - Mike
 
