@@ -364,7 +364,6 @@ After talking to some marine mammals experts in the scientific community, there 
 - Implement a continuous learning pipeline that incorporates the new detections in the training dataset to increase the network accuracy.
 - Expand the dataset to more species and collect more data for the species for which data is currently sparse.  Notably we currently have insufficient data to classify most seal species effectively.
 - Try downsampling the predominant species (Sperm Whale) during training so that its frequency in the dataset is more similar to other species
-- Expand the dataset to more species
 - Implement a detection notification mechanism to inform the community for the real time detection.
 - Use the signal from multiple hydrophones to triangulate the location of a pod.
 - Use autonomous drones for aerial visual validation of a pod
