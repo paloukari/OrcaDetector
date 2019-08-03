@@ -211,12 +211,79 @@ We stratified the remaining samples in three statas:
 2. 20% for the validation strata
 3. 10% for the test strata
 
-- selected EDA plots - Ram
-- choice of species what were included vs. excluded (based on too few training samples) - Mike
-
 ### EDA - Ram
 
-- pick interesting plots from the EDA notebook and insert here
+- link to the EDA notebook from the opening paragraph
+- histogram of species distribution preferably by number of seconds of audio, but if that's too hard, by number of audio files (which you already have)
+- state that the Sperm Whale is the predominant species (right?)
+- sample waveform audio and corresponding mel spectrograms (at least Killer Whale and Sperm Whale since it dominates)
+- other interesting plots from the EDA notebook and insert here
+
+#### Modeled species
+ 
+Based on the number of samples in the training dataset, our final model includes the following species:
+
+- Atlantic Spotted Dolphin
+- Bearded Seal
+- Beluga White Whale
+- Bottlenose Dolphin
+- Boutu Amazon River Dolphin
+- Bowhead Whale
+- Clymene Dolphin
+- Common Dolphin
+- Dall's Porpoise
+- Dusky Dolphin
+- False Killer Whale
+- Fin Finback Whale
+- Frasers Dolphin
+- Grampus Risso's Dolphin
+- Gray Whale
+- Harbor Porpoise
+- Harp Seal
+- Humpback Whale
+- Killer Whale
+- Leopard Seal
+- Long Beaked Pacific Common Dolphin
+- Long Finned Pilot Whale
+- Melon Headed Whale
+- Narwhal
+- Noise
+- Northern Right Whale
+- Pantropical Spotted Dolphin
+- Ross Seal
+- Rough Toothed Dolphin
+- Short Finned Pacific Pilot Whale
+- Southern Right Whale
+- Sperm Whale
+- Spinner Dolphin
+- Striped Dolphin
+- Walrus
+- Weddell Seal
+- West Indian Manatee
+- White Baked Dolphin
+- White Sided Dolphin
+
+The model excludes the following:
+
+- Blue Whale
+- Commerson's Dolphin
+- Finless Porpoise
+- Gray Seal
+- Harbour Seal
+- Heaviside's Dolphin
+- Hooded Seal
+- Irvaddy Dolphin
+- Juan Fernandez Fur Seal
+- Minke Whale
+- New Zealand Fur Seal
+- Ribbon Seal
+- Ringed Seal
+- Sea Otter
+- Spotted Seal
+- Steller Sea Lion
+- Tucuxi Dolphin
+
+
 
 ### Experimental Results
 
@@ -278,14 +345,16 @@ To mitigate the Orcas vocalization sparsity, we added to the inference program a
 
 ## Future Work
 
-After talking to some marin mammals experts of the scientific community, there are some very valuable low-hanging-fruits as next steps that can put this work into use and provide another tool to the community that will help protect and study these species:
+After talking to some marine mammals experts in the scientific community, there are some very valuable low-hanging-fruits as next steps that can put this work into use and provide another tool to the community that will help protect and study these species:
 
 - Move the inference on the existing hydrophones (on the Edge). As we saw, the current hydrophones run on a Raspberry Pi 3. Moving the inference on this device, perhaps by using [an Edge TPU acceleration](https://coral.withgoogle.com/products/accelerator/), we can allow the collection of high sapling lossless audio samples of Orcas by uploading only the detection segments. Also, with will allow the disconnected hydrophones scenarios that will record the detections on a limited size memory chip.
+- Augment our training dataset by mixing noise with the existing positive samples at various levels (analogous to augmenting image training data by adding blur)
 - Improve the live inference sampling method to reduce the 10 seconds sampling window and get closer to zero latency inference.
 - Define a manual validation web interface that allows the experts to see and validate or correct the trained network and increase the quality of the detections.
 - Create location specific training datasets that include samples of a single pod dialect and ambient noise.
 - Implement a continuous learning pipeline that incorporates the new detections in the training dataset to increase the network accuracy.
-- Expand the dataset to more species
+- Expand the dataset to more species and collect more data for the species for which data is currently sparse.  Notably we currently have insufficient data to classify most seal species effectively.
+- Downsample the predominant species (Sperm Whale) so that its frequency in the dataset is more similar to other species
 - Implement a detection notification mechanism to inform the community for the real time detection.
 - Use the signal from multiple hydrophones to triangulate the location of a pod.
 - Use autonomous drones for aerial visual validation of a pod
