@@ -87,13 +87,13 @@ There are multiple samples online of different Killer Whale sounds. Here, we've 
 
 1. [Transient echolocation](http://www.marinemammal.org//wp-content/uploads/2012/10/Transient_echolocation1.wav)
 
-### Echolocation samples slow down
+### Echolocation samples slowed down
 
-Here, we can hear the clicks echoing back on underwater surfaces by slowing down the audio speed.
+Here, we can hear the clicks echoing back on underwater surfaces by slowing down the audio speed by a factor of 10x.
 
 1. [South Residents Killer Whale clicks normal speed](https://www.orcasound.net/data/processed/SRKW/orcasite/srkw-clicks-slow.mp3)
 
-1. [South Residents Killer Whale clicks slow down](https://www.orcasound.net/data/processed/SRKW/orcasite/srkw-clicks-slow.mp3)
+1. [South Residents Killer Whale clicks slowed down 10x](https://www.orcasound.net/data/processed/SRKW/orcasite/srkw-clicks-slowed10x.mp3)
 
 ### Social Structure
 
