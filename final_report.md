@@ -220,9 +220,6 @@ We stratified the remaining samples in three statas:
 2. 20% for the validation strata
 3. 10% for the test strata
 
-- selected EDA plots - Ram
-- choice of species what were included vs. excluded (based on too few training samples) - Mike
-
 ### EDA - Ram
 
 - link to the EDA notebook from the opening paragraph
@@ -357,13 +354,16 @@ To mitigate the Orcas vocalization sparsity, we added to the inference program a
 
 ## Future Work
 
-After talking to some marin mammals experts of the scientific community, there are some very valuable low-hanging-fruits as next steps that can put this work into use and provide another tool to the community that will help protect and study these species:
+After talking to some marine mammals experts in the scientific community, there are some very valuable low-hanging-fruits as next steps that can put this work into use and provide another tool to the community that will help protect and study these species:
 
 - Move the inference on the existing hydrophones (on the Edge). As we saw, the current hydrophones run on a Raspberry Pi 3. Moving the inference on this device, perhaps by using [an Edge TPU acceleration](https://coral.withgoogle.com/products/accelerator/), we can allow the collection of high sapling lossless audio samples of Orcas by uploading only the detection segments. Also, with will allow the disconnected hydrophones scenarios that will record the detections on a limited size memory chip.
+- Augment our training dataset by mixing noise with the existing positive samples at various levels (analogous to augmenting image training data by adding blur)
 - Improve the live inference sampling method to reduce the 10 seconds sampling window and get closer to zero latency inference.
 - Define a manual validation web interface that allows the experts to see and validate or correct the trained network and increase the quality of the detections.
 - Create location specific training datasets that include samples of a single pod dialect and ambient noise.
 - Implement a continuous learning pipeline that incorporates the new detections in the training dataset to increase the network accuracy.
+- Expand the dataset to more species and collect more data for the species for which data is currently sparse.  Notably we currently have insufficient data to classify most seal species effectively.
+- Try downsampling the predominant species (Sperm Whale) during training so that its frequency in the dataset is more similar to other species
 - Expand the dataset to more species
 - Implement a detection notification mechanism to inform the community for the real time detection.
 - Use the signal from multiple hydrophones to triangulate the location of a pod.
