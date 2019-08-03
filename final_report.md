@@ -26,6 +26,7 @@ Research off the west coast of Canada and the United States in the 1970s and 198
 
 ![Toothed Whale Sound Production](images/41598_2019_47335_Fig1_HTML.webp)
 Source: [Scientific Reports](https://www.nature.com/articles/s41598-019-47335-w)
+
 1. **Resident**: These are the most commonly sighted of the three populations in the coastal waters of the northeast Pacific.
 
 1. **Transient**: The diets of these whales consist almost exclusively of marine mammals.
@@ -118,7 +119,7 @@ Centered within the summertime habitat of the endangered southern resident kille
 ### OrcaSound Lab Hydrophones
 
 ![Orcasound 1.0 Hydrophone](images/IMG_20170818_080230.jpg)
-Source: [OrcaSound](https://www.orcasound.net/portfolio/orcasound-lab-hydrophone/) 
+Source: [OrcaSound](https://www.orcasound.net/portfolio/orcasound-lab-hydrophone/)
 
 Orcasound Lab is also the home and laboratory of Dr. Val Veirs who first deployed hydrophones there in the early 2000s with physics and environmental science students from Colorado College. The node has hosted an array of 4-8 hydrophones stretched ~200m along shore at depths of 5-20 meters. Since then, there have been multiple hydrophone deployments, repairs, and acoustic research projects conducted at the node.
 
