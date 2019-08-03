@@ -197,7 +197,7 @@ class VGGish(object):
             else:
                 print(f'Loading weights from {weights}')
                 if not os.path.exists(weights):
-                    raise Exception('ERROR: cannot find {weights}.')
+                    raise Exception(f'ERROR: cannot find {weights}.')
                 self.model.load_weights(weights, by_name=True)
                 
 
