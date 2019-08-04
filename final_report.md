@@ -394,7 +394,11 @@ To mitigate the Orcas vocalization sparsity, we added to the inference program a
 
 ## Simulation
 
-We developed an interactive Simulation tool based on the Jupyter notebook ipyWidgets module. With this simulation tool the user can select different species from our dataset and listen to the sample audio and their associated waveform/Mel spectrogram. In addition they can also select the live audio stream from one of the three hydrophones and mix it with the audio of the mammals and hear/visualize the mixed audio. Finally they can run the inference on the mixed audio to simulate the detection of the presence of a mammal in the audio stream. The user can also adjust the volume of each of the audio sources and see the impact on the mixed audio spectrogram as well as the impact to the inference results. As can be expected increasing the live audio stream volume typically just increases the background noise and decreases the prediction accuracy.
+We developed an interactive Simulation tool based on the Jupyter notebook ipyWidgets module. With this simulation tool the user can select different species from our dataset and listen to the sample audio and view the associated waveform/Mel spectrogram. In addition they can also select the live audio stream from one of the three hydrophones and mix it with the audio of the mammals and hear/visualize the mixed audio.
+
+Finally they can run the inference on the mixed audio to simulate the detection of the presence of a mammal in the audio stream. The user can also adjust the volume of each of the audio sources and see the impact on the mixed audio spectrogram as well as the impact to the inference results. As can be expected increasing the live audio stream volume typically just increases the background noise and decreases the prediction accuracy.
+
+While mixing the live audio we use a fixed window of 10 seconds. Since our quantization threshold for the audio samples during training is close to 1 second we create 10 quantized mixed audio samples for inference. As a result the user can potentially see up-to 10 inference results per inference window. The species detected with highest probability among the 10 different quantized samples is reported as the final result of inference.
 
 Below we illustrate the different features of the interface
 
