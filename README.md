@@ -327,7 +327,9 @@ Our final hyperparameter selection uses a batch size of 64 samples.  We specify 
 
 We also apply a dropout of 0.4 after the core VGGish portion of the model, and we apply L2 regularization (lambda=0.01) for all convolutional and fully-connected layers.
 
-Our best model achieved a training loss of 0.3782, a training accuracy of 0.9498; validation set loss of 0.5784, and validation set accuracy of 0.8884.
+Our final model achieved a training loss of 0.4166, a training accuracy of 0.9241; validation set loss of 0.7256, and validation set accuracy of 0.8188. 
+
+> NOTE: if we exclude a few additional species that are hard to classify, we were possible to obtain higher results.  However, we ultimately left those few species in the model as we didn't feel we had an justifiable rationale to remove them.
 
 Here is the validation accuracy for training of our best model:
 
