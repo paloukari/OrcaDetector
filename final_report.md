@@ -130,12 +130,12 @@ So, for a 16bit depth audio, recorded at 44.1KHz for 4 seconds would comprise of
 
 Machine Learning techniques have been successfully employed for classifying audio signals. One approach is to directly use a Logistic Regression or a ConvNet model directly on the 1D vector representing the audio signal. However, this approach does not take into account the human perception of audio or the time series aspects of an audio signal. More refined techniques work on a window around the audio signal and do feature extraction in the frequency domain in order to generate a more robust set of features for the machine learning models to work with.
 
-### MEL Spectrogram
+### Mel Spectrogram
 
 Mel Frequency Cepstral Coefficents (MFCCs) are a feature widely used in automatic speech and speaker recognition. They were introduced by Davis and Mermelstein in the 1980's, and have been state-of-the-art ever since.
 The Mel Spectrogram attempts to model the characteristics of the human ear. It is observed that the human ear acts as a filter and concentrates only on certain frequency components and also gives more importance to lower frequency components as compared to higher frequency components. The Mel Spectrogram is constructed using Filter Banks each of which focus on a selected frequency range. The Image below shows an illustration of the Filter Banks.
 
-![Example of a MEL Filter Bank](images/MelFilterBank.png)
+![Example of a Mel Filter Bank](images/MelFilterBank.png)
 
 Source: [*Aalto University Wiki*](https://wiki.aalto.fi/display/ITSP/Cepstrum+and+MFCC)
 
@@ -206,8 +206,8 @@ We compute our audio features consistently with Google (using open source code p
 
 1. We resample all audio files (up or down-sampling as necessary) to 16 KHz.
 2. We compute a spectrogram using magnitudes of a Short-Time Fourier Transform with 25 ms window size, 10 ms window hop, and a periodic Hann window.
-3. We compute a mel spectrogram by mapping this spectrogram to 64 mel bins, covering 125-7500 Hz.
-4. We calculate a stabilized log mel spectrogram as log(mel spectrogram + 0.01) in order to errors from log(0).
+3. We compute a Mel spectrogram by mapping this spectrogram to 64 mel bins, covering 125-7500 Hz.
+4. We calculate a stabilized log Mel spectrogram as log(Mel spectrogram + 0.01) in order to errors from log(0).
 5. We quantize the spectrogram into non-overlapping segments of 0.96 seconds length, corresponding to 64 mel bands x 96 frames of 10 ms each.
 
 Because the marine mammal audio samples we use for training the model are collected on different equipment in different locations over a span of many years, the recording conditions vary substantially.  As a result, we find it important to apply batch normalization to all data before feeding it in to our neural network.
@@ -244,7 +244,7 @@ Since the audio data were recorded over a period of several years and across dif
 
 ![Distribution of Sampling rates](images/HistogramSamplingRate.png)
 
-For our MEL feature extraction, we resample the audio at a fixed rate of 16 kHz for a consistent treatment across the audio samples.
+For our Mel feature extraction, we resample the audio at a fixed rate of 16 kHz for a consistent treatment across the audio samples.
 
 #### Modeled species
 
@@ -404,7 +404,7 @@ After talking to some marine mammals experts in the scientific community, there 
 - Use the signal from multiple hydrophones to triangulate the location of a pod.
 - Use autonomous drones for aerial visual validation of a pod.
 
-## References
+## Additional References
 
 - [Marine mammal](https://en.wikipedia.org/wiki/Marine_mammal)
 - [Killer Whales Communication and Echolocation](https://seaworld.org/animals/all-about/killer-whale/communication/)
