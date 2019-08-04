@@ -394,7 +394,26 @@ To mitigate the Orcas vocalization sparsity, we added to the inference program a
 
 ## Simulation
 
-We developed an interactive Simulation tool based on the Jupyter notebook ipyWidgets module. With this simulation tool the user can select different species from our dataset and listen to the sample audio. In addition they
+We developed an interactive Simulation tool based on the Jupyter notebook ipyWidgets module. With this simulation tool the user can select different species from our dataset and listen to the sample audio and their associated waveform/Mel spectrogram. In addition they can also select the live audio stream from one of the three hydrophones and mix it with the audio of the mammals and hear/visualize the mixed audio. Finally they can run the inference on the mixed audio to simulate the detection of the presence of a mammal in the audio stream. The user can also adjust the volume of each of the audio sources and see the impact on the mixed audio spectrogram as well as the impact to the inference results. As can be expected increasing the live audio stream volume typically just increases the background noise and decreases the prediction accuracy.
+
+Below we illustrate the different features of the interface
+
+1. Select Species, Adjust volume if needed and play audio.
+
+![Select Species](images/KillerWhaleAudioInterface.png)
+
+2. View Mel Spectrogram of Selected species
+
+![View Mel](images/ViewSpectrogram.png)
+
+3. Select Live Audio Stream source, Adjust volume if needed. View details
+
+![View Live Audio](images/StreamingAudioMel.png)
+
+4. Run inference
+
+![Run Inference](images/RunInference.png)
+
 
 ### Link to notebook
 
