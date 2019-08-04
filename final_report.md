@@ -5,27 +5,25 @@ This UC Berkeley Master of Information in Data Science final course project was 
 
 ## Abstract
 
-This paper applies the previously published [VGGish audio classification model](https://ai.google/research/pubs/pub45611) to classify the species of marine mammals based on audio samples.  We use a distant learning approach, beginning with model weights that were pretrained on Google's published [Audioset](https://research.google.com/audioset/) data.  We then finish training with a strongly supervised dataset from [Watkins Marine Mammal Sound Database](https://cis.whoi.edu/science/B/whalesounds/fullCuts.cfm).  We achieve an overall F1 score of 0.89 over 38 species, with 26 of the species achieving an F1 score >= 0.70.  We then deploy the trained model to an [NVIDIA Jetson TX2](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-tx2/) edge computing device to perform inference locally, simulating a deployment connected to a hydrophone in the middle of the ocean without internet connectivity.   Since we don't have access to our own hydrophone, for the purposes of simulation, we connect to the [live.orcasound.net](http://live.orcasound.net) live audio stream and perform inference on this stream.  We also incorporate the ability for a person to "inject" an audio sample from a marine mammal species into the live audio stream to simulate an actual detection event.
+This paper applies the previously published [VGGish audio classification model](https://ai.google/research/pubs/pub45611) to classify the species of marine mammals based on audio samples.  We use a distant learning approach, beginning with model weights that were pretrained on Google's published [Audioset](https://research.google.com/audioset/) data.  We then finish training with a strongly supervised dataset from [Watkins Marine Mammal Sound Database](https://cis.whoi.edu/science/B/whalesounds/fullCuts.cfm).  We achieve an overall F1 score of 0.89 over 38 species, with 26 of the species achieving an F1 score >= 0.70.  We then deploy the trained model to an [NVIDIA Jetson TX2](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-tx2/) edge computing device to perform inference locally, simulating a deployment connected to a hydrophone in the middle of the ocean without internet connectivity.   Since we don't have access to our own hydrophone, for the purposes of simulation, we connect to the [live.orcasound.net](http://live.orcasound.net) live audio stream and perform inference on this stream.  We also incorporate the ability for a person to "inject" an audio sample from a marine mammal species into the live audio stream to simulate an actual detection event via our interative notebook.
 
 ## Introduction
 
 ### Marine Mammals
 
-Marine mammals are aquatic mammals that rely on the ocean and other marine ecosystems for their existence. They include animals such as seals, whales, manatees, sea otters and polar bears. They do not represent a distinct taxon or systematic grouping, but rather have a polyphyletic relation due to convergent evolution, as in they do not have an immediate common ancestor. They are also unified by their reliance on the marine environment for feeding.
+Marine mammals rely on the ocean and other marine ecosystems for their existence. They include animals such as seals, whales, manatees, sea otters and polar bears, and are unified by their reliance on the marine environment for feeding [[Wikipedia](https://en.wikipedia.org/wiki/Marine_mammal)].
 
 ### Killer Whale
 
 ![Killer whales jumping](images/Killerwhales_jumping.jpg)
-Source:[Wikipedia](https://en.wikipedia.org/wiki/Killer_whale)
 
-The killer whale or orca (Orcinus orca) is a toothed whale belonging to the oceanic dolphin family, of which it is the largest member. Killer whales have a diverse diet, although individual populations often specialize in particular types of prey. Some feed exclusively on fish, while others hunt marine mammals such as seals and other species of dolphin. They have been known to attack baleen whale calves, and even adult whales. Killer whales are apex predators, as no animal preys on them. A cosmopolitan species, they can be found in each of the world's oceans in a variety of marine environments, from Arctic and Antarctic regions to tropical seas, absent only from the Baltic and Black seas, and some areas of the Arctic Ocean.
+Source: [Wikipedia](https://en.wikipedia.org/wiki/Killer_whale)
+
+The Killer Whale, or Orca, is a toothed whale that is the largest member of the oceanic dolphin family. Some feed exclusively on fish, while others hunt marine mammals such as seals and other dolphins. They have even been known to attack whales. Killer whales are at the top of the food chain in the ocean, as no animal preys on them, and they can be found in all of the world's oceans,absent only from the Baltic and Black seas, as well as some areas of the Arctic Ocean [[Wikipedia](https://en.wikipedia.org/wiki/Killer_whale)].
 
 ### Killer Whale Types
 
-Research off the west coast of Canada and the United States in the 1970s and 1980s identified the following three types:
-
-![Toothed Whale Sound Production](images/41598_2019_47335_Fig1_HTML.webp)
-Source: [Scientific Reports](https://www.nature.com/articles/s41598-019-47335-w)
+Research off the west coast of Canada and the United States in the 1970s and 1980s identified the following three types [[Wikia.org](https://psychology.wikia.org/wiki/Killer_whales)]:
 
 1. **Resident**: These are the most commonly sighted of the three populations in the coastal waters of the northeast Pacific.
 
@@ -33,48 +31,35 @@ Source: [Scientific Reports](https://www.nature.com/articles/s41598-019-47335-w)
 
 1. **Offshore**: A third population of killer whales in the northeast Pacific was discovered in 1988, when a humpback whale researcher observed them in open water.
 
-> Transients and residents live in the same areas, but avoid each other
+Examples of their geographic ranges:
+
+![Toothed Whale Sound Production](images/41598_2019_47335_Fig1_HTML.webp)
+
+Source: [Scientific Reports](https://www.nature.com/articles/s41598-019-47335-w)
 
 ### Echolocation
 
+Sound waves travel through water at a speed of about 1.5 km/sec (0.9 mi/sec), which is 4.5 times as fast as sound traveling through air. Marine mammals have developed adaptations to ensure effective communication, prey capture, and predator detection. Probably one of the most important adaptations is the development of echolocation in whales and dolphins [[Wikipedia](https://en.wikipedia.org/wiki/Animal_echolocation)].
+
 ![Marine Mammals Echolocation](images/Animal_echolocation.svg)
-Source:[Wikipedia](https://en.wikipedia.org/wiki/Animal_echolocation)
 
-Sound waves travel through water at a speed of about 1.5 km/sec (0.9 mi/sec), which is 4.5 times as fast as sound traveling through air. Marine mammals have developed adaptations to ensure effective communication, prey capture, and predator detection. The most notable adaptation is the development of echolocation in whales and dolphins.
+Source: [Wikipedia](https://en.wikipedia.org/wiki/Animal_echolocation)
 
-Killer whales probably rely on sound production and reception to navigate, communicate, and hunt in dark or murky waters. Under these conditions, sight is of little use.
+Killer whales are believed to rely use echolocation to navigate, communicate, and hunt in dark or murky waters [[Seaworld.org](https://seaworld.org/animals/all-about/killer-whale/communication/)].
 
 ![Toothed Whale Sound Production](images/Toothed_whale_sound_production.png)
-Source:[Wikipedia](https://en.wikipedia.org/wiki/Animal_echolocation)
 
-Toothed whales emit a focused beam of high-frequency clicks in the direction that their head is pointing. Sounds are generated by passing air from the bony nares through the phonic lips. These sounds are reflected by the dense concave bone of the cranium and an air sac at its base. The focused beam is modulated by a large fatty organ known as the 'melon'. This acts like an acoustic lens because it is composed of lipids of differing densities.
+Source: [Wikipedia](https://en.wikipedia.org/wiki/Animal_echolocation)
 
 ### Communication
 
-Killer whales use whistles for close-range, or private, communication and coordination of behavioral interactions between animals. Whistles are high pitched, show a high degree of directionality and are highly modulated, as a result, they don't carry far underwater.
-
-The frequency of killer whale whistles ranges from about 0.5 to 40 kHz, with peak energy at 6 to 12 kHz. Studying northern resident killer whales, researchers found that the whales produced more whistles when they were close to other individuals and only sporadically emitted them when the whales were dispersed over larger areas.
-Transient killer whales also use whistles, but more sparingly and have a smaller repertoire in comparison to residents.
+Killer whales make a variety of different noises. They use whistles for close-range communication; the frequency of killer whale whistles ranges from about 0.5 to 40 kHz, with peak energy at 6 to 12 kHz. However, pulsed calls are their most common vocalization  [[Seaworld.org](https://seaworld.org/animals/all-about/killer-whale/communication/)].
 
 ![Spectrograms of three characteristic killer whale sounds](images/41598_2019_47335_Fig2_HTML.webp)
 
-Source:[Communication & Echolocation](https://seaworld.org/animals/all-about/killer-whale/communication/)
+Source: [Seaworld.org](https://seaworld.org/animals/all-about/killer-whale/communication/)
 
-Pulsed calls are the most common vocalization of killer whales.
-
-Experts think these calls function in group recognition and coordination of behavior. Killer whales make these calls at frequencies of about 0.5 to 25 kHz, with peak energy at 1 to 6 kHz. Calls that sound the same time after time are called **stereotyped calls**. All a killer whale's stereotyped calls make up that whale's repertoire.
-
-### Killer Whale Dialects
-
-The individuals of any particular pod share the same repertoire of calls, a vocalization system called a dialect.
-
-Although scientists have noted that there is some type of structure to the calls, a dialect is not the same thing as a language. Analysis of killer whale call patterns has demonstrated substantial **differences between the dialects of different pods**. Pods that associate with one another may share certain calls. Pods that share calls are called a clan.
-Pods may share a certain level of their repertoire with other pods while other portions are unique. The more similarities they share may indicate the degree the pods and individuals are related.
-
->**No two pods share the entire repertoire**
-
-Each pod has its own unique dialect. In fact, the vocal repertoires of each pod remain distinct enough that scientists can identify pods by the sounds they make.
-Killer whales that are separated by great geographical distances have completely different dialects. An analysis of Icelandic and Norwegian killer whale pods revealed that the Icelandic population made 24 different calls and the Norwegian whales made 23 different calls, but the two populations did not share any of the same calls.
+The individuals of any particular pod share the same repertoire of calls, a vocalization system called a dialect, which is unique to that pod. Analysis of killer whale call patterns has demonstrated substantial differences between the dialects of different pods. Pods that associate with one another may share certain calls, but no two pods share the entire repertoire [[Seaworld.org](https://seaworld.org/animals/all-about/killer-whale/communication/)].
 
 ### Audio samples
 
@@ -90,104 +75,80 @@ There are multiple samples online of different Killer Whale sounds. Here, we've 
 
 ### Echolocation samples slowed down
 
-Here, we can hear the clicks echoing back on underwater surfaces by slowing down the audio speed by a factor of 10x.
+Here, we can hear the clicks echoing back on underwater surfaces by slowing down the audio speed by a factor of 10x:
 
 1. [South Residents Killer Whale clicks normal speed](https://www.orcasound.net/data/processed/SRKW/orcasite/srkw-clicks-slow.mp3)
 
 1. [South Residents Killer Whale clicks slowed down 10x](https://www.orcasound.net/data/processed/SRKW/orcasite/srkw-clicks-slowed10x.mp3)
 
-### Social Structure
-
-Killer whales are notable for their complex societies. Only elephants and higher primates live in comparably complex social structures.Due to orcas' complex social bonds, many marine experts have concerns about how humane it is to keep them in captivity.
-
-Resident killer whales in the eastern North Pacific live in particularly complex and stable social groups. Unlike any other known mammal social structure, resident whales live with their mothers for their entire lives. These family groups are based on matrilines consisting of the eldest female (matriarch) and her sons and daughters, and the descendants of her daughters, etc. The average size of a matriline is 5.5 animals. Because females can reach age 90, as many as four generations travel together. These matrilineal groups are highly stable. Individuals separate for only a few hours at a time, to mate or forage. With one exception, a killer whale named Luna, no permanent separation of an individual from a resident matriline has been recorded.
-
-### Conservation
-
-In 2008, the IUCN (International Union for Conservation of Nature) changed its assessment of the killer whale's conservation status from conservation dependent to data deficient, recognizing that one or more killer whale types may actually be separate, endangered species. Depletion of prey species, pollution, large-scale oil spills, and habitat disturbance caused by noise and conflicts with boats are the most significant worldwide threats.
-
-In the Pacific Northwest, wild salmon stocks, a main resident food source, have declined dramatically in recent years. In the Puget Sound region **only 75 whales remain** with few births over the last few years.
-
 ### Underwater noise
 
-Underwater noise from shipping, drilling, and other human activities is a significant concern in some key killer whale habitats, including Johnstone Strait and Haro Strait. In the mid-1990s, loud underwater noises from salmon farms were used to deter seals. Killer whales also avoided the surrounding waters.High-intensity sonar used by the Navy disturbs killer whales along with other marine mammals.Killer whales are popular with whale watchers, which may stress the whales and alter their behaviour, particularly if boats approach too closely or block their lines of travel.
+Underwater noise from shipping, drilling, and other human activities is a significant concern in some Killer Whale habitats, including Johnstone Strait and Haro Strait. In the mid-1990s, loud underwater noises from salmon farms were used to deter seals. Killer whales also avoided the surrounding waters [[Seattle Times](https://projects.seattletimes.com/2019/hostile-waters-orcas-noise/)]. High-intensity sonar used by the Navy also disturbs Killer Whales and other marine mammals [[Scientific American](https://www.scientificamerican.com/article/does-military-sonar-kill/)].  Killer Whales are also extremely popular with whale watchers, whose ships may stress the whales and alter their behaviour if boats approach too closely or block their lines of travel.
 
 ### OrcaSound Lab
 
-Centered within the summertime habitat of the endangered southern resident killer whales, Orcasound Lab is also a good place to listen for ships passing through Haro Strait and boats traveling along the west side of San Juan Island. In the fall you can hear humpbacks, and in the summer male harbor seals vocalize nearby. The hydrophones were first deployed in 2002 are currently just beyond the kelp about 30 m offshore at a depth of 8m. Orcasound Lab is hosted by Beam Reach, a social purpose corporation based in Seattle.
+Because it's within the summertime habitat of the endangered southern resident Killer Whales, [Orcasound Lab](https://www.orcasound.net/portfolio/orcasound-lab-hydrophone/) is a good location for a hydrophone to listen for Killer Whales.  On their live stream, one can also hear ships passing by.  At other times of year, it's possible to hear Humpback Whales (fall) and Harbor Seals (summer). According to their site, hydrophones were first deployed in 2002 are currently just beyond the kelp about 30 m offshore at a depth of 8 m. 
 
 ### OrcaSound Lab Hydrophones
 
+Here we see an image of one of their first generation hydrophones from the [Orcasound Lab](https://www.orcasound.net/portfolio/orcasound-lab-hydrophone/) website.  It is connected to an array of hydrophones stretched for ~200 m along the shore at depths of 5-20 meters.
+
 ![Orcasound 1.0 Hydrophone](images/IMG_20170818_080230.jpg)
+
 Source: [OrcaSound](https://www.orcasound.net/portfolio/orcasound-lab-hydrophone/)
 
-Orcasound Lab is also the home and laboratory of Dr. Val Veirs who first deployed hydrophones there in the early 2000s with physics and environmental science students from Colorado College. The node has hosted an array of 4-8 hydrophones stretched ~200m along shore at depths of 5-20 meters. Since then, there have been multiple hydrophone deployments, repairs, and acoustic research projects conducted at the node.
+And here's a view of their second generation hydrophone, based on a Raspberry Pi 3 in a waterproof box.  according to their website, it is using ffmpeg (as do we), and storing data on AWS.
 
 ![Orcasound 2.0 Hydrophone](images/IMG_20180426_120021.jpg)
 
 Source: [OrcaSound](https://www.orcasound.net/2018/04/27/orcasounds-new-live-audio-solution-from-hydrophone-to-headphone-with-a-raspberry-pi-computer-and-hls-dash-streaming-software/)
 
-The latest Orcasound 2.0 prototype: A hydrophone cable (blue) connects to the input of the Pisound sound board which is attached to a Raspberry Pi3 which is powered over the ethernet cable (black) that also allows open-source software, including ffmpeg and s3fs, to transfer live audio data to an S3 bucket hosted by Amazon Web Services! It’s all kept safe in an inexpensive, easy to set-up waterproof box, plus there’s room for a second hydrophone, an optional external speaker.
+### Automating Detection on the Edge
 
-### Orca Sound Detectors
+In the research community there seems to be tremendous desire for an accurate, automated detection system that could process live streams from such hydrophones. Although attempts have been made to create one, today most of the detections seem to be made by people listening to the audio, live or recorded, either experts or self-taught community enthusiasts.  Our project is developed in response to this need.
 
-In the past decade, various researchers have used traditional signal processing and speech recognition techniques, such as dynamic time warping, hidden Markov and Gaussian mixture models as well as spectrogram correlation to develop algorithms in order to detect dolphin, bowhead whale, elephant, bird, and killer whale vocalizations. Others have adopted techniques like discriminant function analysis random forest classifiers decision tree classification systems, template-based automatic recognition, artificial neural networks, and support vector machines in conjunction with (handcrafted) temporal and/or spectral features (e.g. mel-frequency cepstrum coefficients) for bat, primate, bird, and killer whale sound detection/classification. Many of the aforementioned research works used much smaller datasets, both for training and evaluation. In addition, for many of those traditional machine-learning techniques, a set of acoustic (handcrafted) features or parameters needed to be manually chosen and adjusted for the comparison of similar bioacoustic signals.
+An accurate detection mechanism will allow the marine scientists to collect more samples and better understand these species.  A real time accurate detector could also produce a timely warning to vessels in the proximity of the detection to reduce speed or pause extreme activities like submarine military sonar exercises, in order to protect the marine mammals and offer a safe passage.
 
-However, features derived from small data corpora usually do not reflect the entire spread of signal varieties and characteristics. Moreover, traditional machine-learning algorithms often perform worse than modern deep learning approaches, especially if the dataset contains a comprehensive amount of (labeled) data. Due to insufficient feature qualities, small training/validation data, and the traditional machine-learning algorithms themselves, model robustness and the ability to generalize suffer greatly while analyzing large, noise-heavy, and real-world (unseen) data corpora containing a variety of distinct signal characteristics. Furthermore, traditional machine-learning and feature engineering algorithms have problems in efficiently processing and modelling the complexity and non-linearity of large datasets. Outside the bioacoustic field, deep neural network (DNN) methods have progressed tremendously because of the accessibility to large training data and increasing computational power by the use of graphics processing units (GPUs). DNNs have not only performed well in computer vision but also outperformed traditional methods in speech recognition as evaluated in several benchmark studies. Such recent successes of DNNs inspired the bioacoustic community to apply state-of-the-art methods on animal sound detection and classification.
-
-### Detection status today
-
-In the research community There is a tremendous interest for an accurate automated Orca Sound detector. Although many attempts have been made to create one, today most of the detections are made by people listening to the audio, live or recorded, either experts or self-taught community enthusiasts.
-
-### Real time detectors
-
-The primary value for a real time accurate detector is to produce a timely waring to the vessels in the proximity of the detection to reduce speed or pause extreme activities like submarine military sonar exercises, to protect the Whales and offer a safe passage.
-
-Furthermore, an accurate detection mechanism will allow the marine scientists to collect more samples and better understand these species.
-
-### Detection on the Edge
-
-Researchers indicate that an audio spectrum up to 160 kHz will reveal new information from these species sounds that has not been yet studied. The required upstream bandwidth and cost for such hydrophones though is forbidding. This can be solved by an automated detector running on the edge and uploading only the sparse positive samples.
+Additionally, because the required upstream bandwidth and cost for streaming and recording all audio from such hydrophones is prohibitive, there would be enormous value in having an automated detector which could run at the edge and upload only the (realtively rare) positive samples.
 
 ## Background for Audio Classification
 
 ### Representing Audio Signals
 
-Audio signals are typically represented by a 1D vector comprising of a time series of signal amplitudes. The translation of the analog audio signal to the 1D vector is done using [Pulse Code Modulation](https://en.wikipedia.org/wiki/Pulse-code_modulation). Two parameters of importance during the PCM process is the bit-depth and the sampling rate.
+Audio signals are typically represented by a 1D vector comprising of a time series of signal amplitudes. The translation of the analog audio signal to the 1D vector is done using [Pulse Code Modulation](https://en.wikipedia.org/wiki/Pulse-code_modulation). Two parameters of importance during the PCM process are the bit-depth and the sampling rate.
 
 ![Sample Audio Signal](images/SampleAudioWave.png)
 
-- **Bit Depth** - Range of amplitude values that can be represented. For example a 16 bit bit depth implies that 2^16 (=65536) different values can be represented
-- **Sampling Rate** - Number of times the audio is sampled per second. A sampling rate of 44.1KHz implies that 44100 samples of the audio amplitude are recorded per second.
+- **Bit Depth** - This is the ange of amplitude values that can be represented. For example a 16 bit bit depth implies that 2^16 (=65536) different values can be represented.
+- **Sampling Rate** - This quantifies the number of times the audio is sampled per second. A sampling rate of 44.1KHz implies that 44,100 samples of the audio amplitude are recorded per second.
 
-So, for a 16bit depth audio, recorded at 44.1KHz for 4 seconds would comprise of 44100 * 4 = 176400 numbers, each with 2bytes, implying 352kb of data.
+So, for a 16bit depth audio, recorded at 44.1KHz for 4 seconds would comprise of 44,100 * 4 = 176,400 numbers, each with 2 bytes, implying approximately 352 kB of data.
 
 ### Audio Features for Machine Learning
 
-Machine Learning techniques have been successfully employed for classifying Audio signals. One approach is to directly use a Logistic regression or a CNN model directly on the 1D vector representing the audio signal. However, this approach does not take into account the human perception of audio and the time series aspects of an audio signal. More refined techniques work on a window around the audio signal and do feature extraction in the frequency domain which give a more robust set of features for the machine learning models to work with.
+Machine Learning techniques have been successfully employed for classifying audio signals. One approach is to directly use a Logistic Regression or a ConvNet model directly on the 1D vector representing the audio signal. However, this approach does not take into account the human perception of audio or the time series aspects of an audio signal. More refined techniques work on a window around the audio signal and do feature extraction in the frequency domain in order to generate a more robust set of features for the machine learning models to work with.
 
 ### MEL Spectrogram
 
-Mel Frequency Cepstral Coefficents (MFCCs) are a feature widely used in automatic speech and speaker recognition. They were introduced by Davis and Mermelstein in the 1980's, and have been state-of-the-art ever since.
-The Mel Spectrogram attempts to model the characteristics of the human ear. It is observed that the human ear acts as a filter and concentrates only on certain frequency components and also gives more importance to lower frequency components as compared to higher frequency compnents. The Mel Spectrogram is constructed using Filter Banks each of which focus on a selected frequency range. The Image below shows an illustration of the Filter Banks.
+Mel Frequency Cepstral Coefficents (MFCCs) are a feature widely used in automatic speech and speaker recognition. They were introduced by Davis and Mermelstein in the 1980's, and have been state-of-the-art ever since. The Mel Spectrogram attempts to model the characteristics of the human ear. It is observed that the human ear acts as a filter and concentrates only on certain frequency components, and also gives more importance to lower frequency components as compared to higher frequency components. The Mel Spectrogram is constructed using filter banks, each of which focus on a selected frequency range. The image below shows an illustration of the filter banks.
 
 ![Example of a MEL Filter Bank](images/MelFilterBank.png)
 
 Each of the filters focus on a frequency range. As can be seen the filters are more concentrated in the lower frequency range and get sparse at the higher frequency range.
 
-The flow used to convert the Audio signal to the Mel Spectrogram is illustrated below. More details of the process can be found in this [excellent tutorial](https://archive.org/details/SpectrogramCepstrumAndMel-frequency_636522) from CMU.
+The flow used to convert the audio signal to the Mel Spectrogram is illustrated below. More details of the process can be found in this [excellent tutorial](https://archive.org/details/SpectrogramCepstrumAndMel-frequency_636522) from CMU.
 
 ![Audio file to Mel Spectrogram Conversion](images/AudioToMel.png)
 
-The below diagrams illustrate the audio signal and their mel spectrogram for some samples from our dataset
+The below diagrams illustrate the audio signal and their mel spectrogram for some samples from our dataset:
 
-- Killer Whale - Sample Audio/Mel Features
+#### Killer Whale - Sample Audio/Mel Features
 
 ![Killer Whale Audio Sample](images/KillerWhaleAudio.png)
 
 ![Killer Whale Mel Spectrogram](images/KillerWhaleMel.png)
 
-- Humpback Whale - Sample Audio/Mel Features
+#### Humpback Whale - Sample Audio/Mel Features
 
 ![Humpback Whale Audio Sample](images/HumpbackWhaleAudio.png)
 
@@ -197,13 +158,13 @@ The below diagrams illustrate the audio signal and their mel spectrogram for som
 
 Mel spectrograms are commonly used representations of audio signals, as they are more classifiable by deep learning models than the original audio waveforms.  They have been used as a feature representation in deep learning models for the classification of whale acoustic signals, and also for automated classification of bird species.  However, we believe our work is unique in that we simultaneously attempt to classify a large number of marine mammal species (38), generally with very good results.
 
-We also have collected "noise" data from multiple live streaming hydrophones in order to create a supervised "Noise" training set, which is important in that it can be used in combination with the actual marine mammal training data to enable the model to predict when _none of the species_ are present in a given audio sample.  This is important for real-life applications, as we would generally expect a hydrophone to not be picking up marine mammal audio most of the time.
+We also have collected "noise" data from multiple live streaming hydrophones in different locations in order to create a supervised "Noise" training set.  This is important in that it can be used in combination with the actual marine mammal training data to enable the model to predict when _none of the species_ are present in a given audio sample.  This is important for real-life applications, as we would generally expect a hydrophone to not be picking up marine mammal audio most of the time.
 
 We also demonstrate that our model, once trained on a cloud virtual machine can then be deployed to a disconnected edge computing device for inference (the TX2).  When a positive prediction is made, we also capture the audio signal, which could enable further future analysis.
 
 ## Model Architecture
 
-We used a model architecture named "[VGGish](https://github.com/tensorflow/models/tree/master/research/audioset/vggish)", developed by Google, along with pretrained weights trained on a subset of Google's AudioSet with 2 million human-labeled 10-second YouTube video clips, with labels taken from an ontology of more than 600 audio event classes.  This model gets its name from the fact that it's based on the common [VGG](https://arxiv.org/abs/1409.1556) architecture for image classification.
+We use a model architecture named "[VGGish](https://github.com/tensorflow/models/tree/master/research/audioset/vggish)", developed by Google, along with pretrained weights trained on a subset of Google's AudioSet with 2 million human-labeled 10-second YouTube video clips, with labels taken from an ontology of more than 600 audio event classes.  This model gets its name from the fact that it's based on the common [VGG](https://arxiv.org/abs/1409.1556) architecture for image classification.
 
 After instantiating the model with Google's pretrained weights, we apply a distant supervision approach by treating those weights as a "warm start" for a model with additional layers built on top of the original VGGish layers.  We also continue to update the weights in the core VGGish layers when we train on our supervised marine mammal training set.
 
@@ -217,7 +178,7 @@ On top of those base layers, we have added a dropout layer to provide some regul
 
 ![OrcaDetector modified VGGish architecture](images/orca_vggish_arch.png)
 
-We use categorical cross-entropy as our loss function, and the ADAM optimizer.
+We use categorical cross-entropy as our loss function, and the Adam optimizer.
 
 ## Method
 
@@ -227,11 +188,11 @@ Most of our development and model training was done on virtual machines with NVI
 
 To train a multi-class DNN we used the [Watkins Marine Mammal Sound Database](https://cis.whoi.edu/science/B/whalesounds/index.cfm). We contacted the Watkins scientific team and got  the permission to crawl their online database.
 
-#### Web Scrapping
+#### Web Scraping
 
-Furthermore, the team sent us a web crawling prototype implementedPython to facilitate our efforts. A modified version of it is committed in this repo. The crawled dataset consisted of ~20GB of labeled WAV files of 56 different marine mammals. These samples have been collected from different locations and years.
+Furthermore, the team provided us with a web crawling prototype implemented in Python to facilitate our efforts. A modified version of it is committed in this repo. The crawled dataset consisted of ~20 GB of labeled WAV files from 56 different marine mammals. These samples have been collected from different locations and years.
 
-> We've excluded all species from the dataset that had less than 10 samples.
+> We've excluded all species from the dataset that had too few audio segments to effectively train on.
 
 #### Mel Spectrogram Feature Computation
 
@@ -249,38 +210,35 @@ Because the marine mammal audio samples we use for training the model are collec
 
 To allow the network to detect a negative class (no species detected) we collected and added in the dataset a new class that represented the hydrophone background noise. To do this, we created a noise collection command that run for the duration of a weekend and periodically collected background noise samples from the OrcaSound live feed hydrophones, to make sure that we had a plethora of recorded different background noise phenomena (different ships, speed boats, waves, weather etc.).
 
-#### Data stratification
+#### Stratified Train / Val / Test Datasets
 
-We stratified the remaining samples in three statas:
+We stratified the remaining samples into three datasets in order that each species would be present in approximately the same proportions in each:
 
-1. 70% for the training strata
-2. 20% for the validation strata
-3. 10% for the test strata
+1. 70% for training
+2. 20% for validation
+3. 10% for test
 
-### EDA
+### Exploratory Data Analysis
 
-The link to our EDA notebook can be found in this [link](orca-eda.ipynb)
+A more complete version of our EDDA can be found in [our EDA notebook](orca-eda.ipynb).
 
-The audio samples in the dataset are not evenly distributed among the different species. The plot below shows the distribution of the number of samples per species.
+The audio samples in the dataset are not evenly distributed among the different species. The plot below shows the distribution of the number of audio files obtained per species.
 
 ![Distribution of Audio Samples by number of Samples](images/EDASpeciesHistogram.png)
 
-As can be seen the KillerWhale and SpermWhale species have the largest number of overall samples.
-The falling left tail in the distribution lead us to remove some species which are under-represented in terms of number of samples. We list the included samples in the section on *Model Species* below
+As can be seen the Killer Whale and Sperm Whale species have the largest number of overall files.  The long left tail in this distribution demonstrates why it was necessary to remove some species from our dataset. We list the included samples in the next section.
 
-92% of all the audio samples have been recorded for less than 10seconds and 85% of all the samples are 5 seconds or below in duration.
+It's important to note that files were not of consistent lengths.  92% of all the audio samples are less than 10 seconds long, and 85% of all the samples are 5 seconds or below in duration.
 
 ![Distribution of Audio Length](images/HistogramAudioSamples.png)
 
-To have a uniform sample duration, we derived quantized samples of fixed size audio files of close to 1 second in duration. For example given a 5 second original audio sample, 5 quantized samples with the same training label were created.
-
-After the quantization process, the SpermWhale species dominated the number of samples and ended up being our dominant class.
+To have a uniform sample duration for use in training and inference, we derive quantized samples of fixed size audio files of slightly less than 1 second in duration. For example given a 5 second original audio sample, 5 quantized samples with the same training label were created.  After the quantization process, the Sperm Whale species dominated the number of samples and ended up being our dominant class.
 
 Since the audio data were recorded over a period of several years and across different geographies and equipment, there is a large variety of sampling rates employed. The plot below shows the distribution of sampling rates used.
 
 ![Distribution of Sampling rates](images/HistogramSamplingRate.png)
 
-For our MEL feature extraction, we resample the audio at a fixed rate of 16kHz for a consistent treatment across the audio samples.
+For our MEL feature extraction, we resample the audio at a fixed rate of 16 kHz for a consistent treatment across the audio samples.
 
 #### Modeled species
 
@@ -348,7 +306,7 @@ The model excludes the following:
 
 ### Experimental Results
 
-We performed a series of hyperparameter optimization experiments varying the following parameters (details of key runs are in this [Google Sheet](https://docs.google.com/spreadsheets/d/1AInfJPV6c3MjMXjJ0WYBfp52MPZmGdZVDw-sr4wghvg/edit?usp=sharing)):
+We performed a series of hyperparameter optimization experiments varying the following parameters in the specified ranges (details of key runs are in this [Google Sheet](https://docs.google.com/spreadsheets/d/1AInfJPV6c3MjMXjJ0WYBfp52MPZmGdZVDw-sr4wghvg/edit?usp=sharing)):
 
 - Batch size: 64 - 256
 - Dropout: 0 - 0.4
@@ -357,7 +315,7 @@ We performed a series of hyperparameter optimization experiments varying the fol
 - Final dense layers: None, 2 x 256-wide, 2 x 4096-wide
 - L2 regularization: None, 0.005 - 0.1
 
-Our final hyperparameter selection uses a batch size of 64 samples.  We specify 100 epochs of training, with an early stopping condition that typically results in training being completed in approximately 35 epochs. We use an ADAM optimizer, with initial learning rate of 0.001.  We also apply a Keras callback to reduce the learning rate when learning has plateaued for 2 consecutive epochs, with a minimum allowed learning rate of 0.00001.
+Our final hyperparameter selection uses a batch size of 64 samples.  We specify 100 epochs of training, with an early stopping condition that typically results in training being completed in approximately 35 epochs. We use an Adam optimizer, with initial learning rate of 0.001.  We also apply a Keras callback to reduce the learning rate when learning has plateaued for 2 consecutive epochs, with a minimum allowed learning rate of 0.00001.
 
 We also apply a dropout of 0.4 after the core VGGish portion of the model, and we apply L2 regularization (lambda=0.01) for all convolutional and fully-connected layers.
 
@@ -371,7 +329,7 @@ Here is the corresponding loss plot for training of the best model:
 
 ![Validation accuracy](images/val_loss_058983.svg)
 
-Here we show the classification metrics for each species (note that "Support" indicates the number of samples in the test set):
+Here we show the classification metrics for the test set, for each species (note that "Support" indicates the number of samples in the test set):
 
 ![Classification metrics](images/test_results_058983.png)
 
@@ -386,66 +344,59 @@ After training and testing the network, the next step was real input testing. Of
 
 To mitigate the first problem, we used the live web audio hydrophone sources from [live.orcasound.net](http://live.orcasound.net). There are currently three active hydrophones in the Salish sea, one at the **Port Townsend**, one at the **Bush Point** and finally one at the **Haro Strait**
 
-These live hydrophone sources are broadcasted online using the [HTTP Live Streaming](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) protocol. The live inference program will connect to the configured live streaming endpoints and will collect ten seconds of each stream, in one second segments. Then, after extracting the audio features the same way the features were extracted in the training phase, a batch inference is performed in Keras. If a positive detection is found with a confidence above the minimum threshold (>75%), then a backup of the audio samples is kept along with the inference results in a json file.
+These live hydrophone sources are broadcasted online using the [HTTP Live Streaming](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) protocol. The live inference program will connect to the configured live streaming endpoints and will collect ten seconds of each stream, in one second segments. Then, after extracting the audio features the same way the features were extracted in the training phase, a batch inference is performed in Keras. If a positive detection is found with a confidence above the minimum threshold (>75%), then a backup of the audio samples is kept along with the inference results in a json file.  This higher threshold is used to avoid filling our hard drive with false positive detections.
 
 ![Hydrophones Map](images/map_home.jpg)
 
-To mitigate the Orcas vocalization sparsity, we added to the inference program an ad-hoc mixing capability that injected a predefined Orca sound into the live hydrophones stream. We found this approach very useful as a testing pipeline that validates a positive detection inference on a known positive sample, and conversely, a negative detection on noise samples. This approach can be very useful in continuous delivery pipelines of newly trained networks, especially for Edge scenarios.
+To mitigate the sparsity of Orca (and other species') vocalizations, we added to our inference code an ad-hoc mixing capability that injected a predefined Orca sound into the live hydrophones stream. We have found this approach very useful as a testing pipeline that validates a positive detection inference on a known positive sample, and conversely, a negative detection on noise samples. This approach can be very useful in continuous delivery pipelines of newly trained networks, especially for edge-computing scenarios.
 
 ## Simulation
 
-We developed an interactive Simulation tool based on the Jupyter notebook ipyWidgets module. With this simulation tool the user can select different species from our dataset and listen to the sample audio and view the associated waveform/Mel spectrogram. In addition they can also select the live audio stream from one of the three hydrophones and mix it with the audio of the mammals and hear/visualize the mixed audio.
+We developed an interactive simulation tool based on the Jupyter notebook [ipyWidgets module](https://ipywidgets.readthedocs.io/en/latest/). With this simulation tool the user can select different species from our dataset and listen to an sample audio and view the associated waveform and Mel Spectrogram. In addition they can also select the live audio stream from one of the three hydrophones and mix it with the audio of the mammals and hear/visualize the mixed audio.
 
-Finally they can run the inference on the mixed audio to simulate the detection of the presence of a mammal in the audio stream. The user can also adjust the volume of each of the audio sources and see the impact on the mixed audio spectrogram as well as the impact to the inference results. As can be expected increasing the live audio stream volume typically just increases the background noise and decreases the prediction accuracy.
+Finally, the user can run the inference on the mixed audio to simulate the detection of the presence of a mammal in the audio stream. They can also adjust the volume of each of the audio sources and see the impact on the mixed audio spectrogram as well as the impact to the inference results. As can be expected increasing the live audio stream volume typically just increases the background noise and decreases the prediction accuracy.
 
 While mixing the live audio we use a fixed window of 10 seconds. Since our quantization threshold for the audio samples during training is close to 1 second we create 10 quantized mixed audio samples for inference. As a result the user can potentially see up-to 10 inference results per inference window. The species detected with highest probability among the 10 different quantized samples is reported as the final result of inference.
 
-Below we illustrate the different features of the interface
+Below we illustrate the different features of the interface:
 
 1. Select Species, Adjust volume if needed and play audio.
 
 ![Select Species](images/KillerWhaleAudioInterface.png)
 
-2. View Mel Spectrogram of Selected species
+2. View a Mel Spectrogram of selected audio sample.
 
 ![View Mel](images/ViewSpectrogram.png)
 
-3. Select Live Audio Stream source, Adjust volume if needed. View details
+3. Select a live audio stream source, adjust volume if needed, and view details.
 
 ![View Live Audio](images/StreamingAudioMel.png)
 
-4. Run inference
+4. Perform inference using our best model.
 
 ![Run Inference](images/RunInference.png)
 
+Our interactive simulation is in a companion [Jupyter notebook](orca_detect_demo.ipynb).
 
-### Link to notebook
+## Conclusion
 
-To run the simulations, please follow the link to the Jupyter notebook below
-[Notebook link](orca_detect_demo.ipynb)
-
-## Conclusion - Mike
-
-- impressive results, with model that easily fits on a TX2
-- demonstrated that VGGish works well for marine mammal classification
-- demonstrated that distant learning w/ Audioset YouTube samples (millions) followed by strongly supervised topical samples (thousands of audio files)
-- room for future improvements depending on which species are most interesting
+We have successfully trained a multi-class supervised machine learning model based on Google's VGGish architecture to classify 38 species of marine mammals based on audio samples, demonstraing the model's applicability for this marine biology use case.  We used a distant learning approach, loading weights pretrained on 2M samples from Google's Audioset, followed by further training using a labeled dataset from the Watkins Marine Mammal Sound Database.  We achieved an overall F1 score of 0.89, and an impressive F1 of 0.94 for our project's namesake, the Killer Whale.  In total 26 of the species achieved an F1 score >= 0.70 against our test set.  We successfully deployed our trained model to an NVIDIA TX2 device (as well as to cloud VMs) in order to perform inference against a live stream.  We also developed a tool to simulate the presence of a marine mammal over a noisy background.  We believe this model holds potential to be a useful tool to marine biologists, and that there is room to continue to improve its performance.
 
 ## Future Work
 
-After talking to some marine mammals experts in the scientific community, there are some very valuable low-hanging-fruits as next steps that can put this work into use and provide another tool to the community that will help protect and study these species:
+After talking to some marine mammals experts in the scientific community, there are some valuable low-hanging-fruits as next steps that could put this work into use and provide another tool to the scientific community to help protect and study these species:
 
-- Move the inference on the existing hydrophones (on the Edge). As we saw, the current hydrophones run on a Raspberry Pi 3. Moving the inference on this device, perhaps by using [an Edge TPU acceleration](https://coral.withgoogle.com/products/accelerator/), we can allow the collection of high sapling lossless audio samples of Orcas by uploading only the detection segments. Also, with will allow the disconnected hydrophones scenarios that will record the detections on a limited size memory chip.
+- Move the inference onto the existing devices connected to hydrophones. As we saw, the current hydrophones run on a Raspberry Pi 3. Moving the inference onto this device, or perhaps by using an [Edge TPU accelerator](https://coral.withgoogle.com/products/accelerator/), we could enable the collection of high sample-rate, loss-less audio samples of Orcas by uploading only the detection segments. Also, we could enable disconnected hydrophones to record the detections on a limited size memory chip.
+- Create location specific training datasets that include samples of a single pod dialect and ambient noise.
 - Augment our training dataset by mixing noise with the existing positive samples at various levels (analogous to augmenting image training data by adding blur)
 - Improve the live inference sampling method to reduce the 10 seconds sampling window and get closer to zero latency inference.
-- Define a manual validation web interface that allows the experts to see and validate or correct the trained network and increase the quality of the detections.
-- Create location specific training datasets that include samples of a single pod dialect and ambient noise.
+- Define a manual validation web interface that allows experts to visualize and validate or correct the trained network and increase the quality of the detections.
 - Implement a continuous learning pipeline that incorporates the new detections in the training dataset to increase the network accuracy.
 - Expand the dataset to more species and collect more data for the species for which data is currently sparse.  Notably we currently have insufficient data to classify most seal species effectively.
 - Try downsampling the predominant species (Sperm Whale) during training so that its frequency in the dataset is more similar to other species
-- Implement a detection notification mechanism to inform the community for the real time detection.
+- Implement a notification mechanism to inform the community for the real time detection.
 - Use the signal from multiple hydrophones to triangulate the location of a pod.
-- Use autonomous drones for aerial visual validation of a pod
+- Use autonomous drones for aerial visual validation of a pod.
 
 ## References
 
@@ -467,3 +418,4 @@ After talking to some marine mammals experts in the scientific community, there 
 - [BirdNET: the Easiest Way To Identify Birds By Sound](https://birdnet.cornell.edu/)
 - [Building a Dead Simple Speech Recognition Engine using ConvNet in Keras](https://blog.manash.me/building-a-dead-simple-word-recognition-engine-using-convnet-in-keras-25e72c19c12b?gi=8dc01998d177)
 - [Sound Classification with TensorFlow](https://medium.com/iotforall/sound-classification-with-tensorflow-8209bdb03dfb)
+- [Spectrogram, Cepstrum and Mel-Frequency](https://archive.org/details/SpectrogramCepstrumAndMel-frequency_636522)
