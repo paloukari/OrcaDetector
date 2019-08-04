@@ -157,6 +157,7 @@ Audio signals are typically represented by a 1D vector comprising of a time seri
 
 ![Sample Audio Signal](images/SampleAudioWave.png)
 
+Source: [*kaggle Beginner Guide to Audio*](https://www.kaggle.com/fizzbuzz/beginner-s-guide-to-audio-data)
 - **Bit Depth** - Range of amplitude values that can be represented. For example a 16 bit bit depth implies that 2^16 (=65536) different values can be represented
 - **Sampling Rate** - Number of times the audio is sampled per second. A sampling rate of 44.1KHz implies that 44100 samples of the audio amplitude are recorded per second.
 
@@ -169,17 +170,20 @@ Machine Learning techniques have been successfully employed for classifying Audi
 ### MEL Spectrogram
 
 Mel Frequency Cepstral Coefficents (MFCCs) are a feature widely used in automatic speech and speaker recognition. They were introduced by Davis and Mermelstein in the 1980's, and have been state-of-the-art ever since.
-The Mel Spectrogram attempts to model the characteristics of the human ear. It is observed that the human ear acts as a filter and concentrates only on certain frequency components and also gives more importance to lower frequency components as compared to higher frequency compnents. The Mel Spectrogram is constructed using Filter Banks each of which focus on a selected frequency range. The Image below shows an illustration of the Filter Banks.
+The Mel Spectrogram attempts to model the characteristics of the human ear. It is observed that the human ear acts as a filter and concentrates only on certain frequency components and also gives more importance to lower frequency components as compared to higher frequency components. The Mel Spectrogram is constructed using Filter Banks each of which focus on a selected frequency range. The Image below shows an illustration of the Filter Banks.
 
 ![Example of a MEL Filter Bank](images/MelFilterBank.png)
+
+Source: [*Aalto University Wiki*](https://wiki.aalto.fi/display/ITSP/Cepstrum+and+MFCC)
 
 Each of the filters focus on a frequency range. As can be seen the filters are more concentrated in the lower frequency range and get sparse at the higher frequency range.
 
 The flow used to convert the Audio signal to the Mel Spectrogram is illustrated below. More details of the process can be found in this [excellent tutorial](https://archive.org/details/SpectrogramCepstrumAndMel-frequency_636522) from CMU.
 
 ![Audio file to Mel Spectrogram Conversion](images/AudioToMel.png)
+[*Adapted from CMU slides*](https://archive.org/details/SpectrogramCepstrumAndMel-frequency_636522)
 
-The below diagrams illustrate the audio signal and their mel spectrogram for some samples from our dataset
+The below diagrams illustrate the audio signal and their Mel spectrogram for some samples from our dataset
 
 - Killer Whale - Sample Audio/Mel Features
 
@@ -209,7 +213,7 @@ After instantiating the model with Google's pretrained weights, we apply a dista
 
 Specifically VGGish is a variant of the 11 weight-layer version of VGG (model "A" in the original paper), with the following changes:
 
-1. Input size was changed to 96x64 for consistency with log mel spectrogram inputs.
+1. Input size was changed to 96x64 for consistency with log Mel spectrogram inputs.
 2. The last group of convolutional and max pool layers are dropped, leaving this model with only 4 groups instead of 5 in the original model.
 3. The final 1000-wide fully-connected layer is replaced with a 128-wide fully-connected layer.  (Note that the model we developed and trained does not incorporate this layer; we only use the pre-bottleneck layers of VGGish.)
 
