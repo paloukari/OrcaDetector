@@ -185,7 +185,7 @@ class MammalFind(object):
             to see if the success rate is better
         """
         fnames = self.file_df[self.file_df.label == mammal]
-        fnames = fnames[fnames.duration > 10]
+        fnames = fnames[(fnames.duration > 5) & (fnames.duration < 15)  ]
         if (fnames.shape[0] == 0):
             fnames = fnames.iloc[0]
         #fnames = fnames.sample(1)
