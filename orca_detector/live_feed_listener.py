@@ -20,6 +20,7 @@ import sys
 import time
 import uuid
 import urllib.request
+import uuid
 from threading import Thread
 from database_parser import extract_segment_features
 from inference import create_network
@@ -60,7 +61,7 @@ def _save_audio_segments(stream_url,
                  f'-f segment -segment_time {segment_seconds} {output_file}'
     
     # TODO: delete this print statement later
-    print(f'DEBUG - ffmpeg mixing command: {ffmpeg_cli}')
+    # print(f'DEBUG - ffmpeg mixing command: {ffmpeg_cli}')
 
     if not verbose:
         ffmpeg_cli = ffmpeg_cli + ' -loglevel error'
@@ -116,8 +117,10 @@ def perform_inference(model, encoder, inference_samples_path, probability_thresh
                                    & (results[:, [1]] != orca_params.NOISE_CLASS).ravel()]
 
         if len(results) > 0:
+            # Create a randomly named subdirectory to avoid overwriting prior finds
+            subdir = uuid.uuid4().hex
             destination_folder = os.path.join(
-                orca_params.DETECTIONS_PATH, POSITIVE_INFERENCE_TIMESTAMP)
+                orca_params.DETECTIONS_PATH, POSITIVE_INFERENCE_TIMESTAMP, subdir)
             shutil.copytree(inference_samples_path, destination_folder)
             print(f'Copied positive inference results at:{destination_folder}')
             pd.DataFrame(results).to_csv(os.path.join(destination_folder, "results.csv"))
@@ -130,6 +133,8 @@ def perform_inference(model, encoder, inference_samples_path, probability_thresh
         print('Thread collision; multiple threads processing same audio files.')
         print('Unable to perform inference for {}'.format(
             (inference_samples_path)))
+    except ValueError:
+        print('Could not process input sample.  Possibly zero length.')
 
     return results
 

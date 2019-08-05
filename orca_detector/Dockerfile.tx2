@@ -1,0 +1,100 @@
+FROM w251/keras:dev-tx2-4.2_b158-py3
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Avoid perl warnings
+RUN sudo apt-get update && \
+    apt-get install -y locales
+ENV LANGUAGE=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+RUN locale-gen en_US.UTF-8
+RUN dpkg-reconfigure locales
+
+# Install necessary *nix tools
+RUN sudo apt-get update && \
+    apt-get install -y vim && \
+    apt-get install -y git-core && \
+    apt-get install -y python3-pil && \
+    apt-get install -y libsndfile1 && \
+    apt-get install -y ffmpeg && \
+    apt-get install -y libfreetype6-dev && \
+    apt-get install -y pkg-config && \
+    apt-get install -y libcurl4-openssl-dev && \
+    apt-get install -y libssl-dev && \
+    apt-get install -y wget && \
+    apt-get install -y libportaudio2
+
+# Install prereqs for scipy
+RUN sudo apt-get install -y libblas-dev && \
+    apt-get install -y liblapack-dev && \
+    apt-get install -y libatlas-base-dev && \
+    apt-get install -y gfortran
+
+# Dependencies for python-apt, pytables, cffi and scikitlearn
+RUN sudo apt-get install -y python3-apt && \
+    apt-get install -y libhdf5-serial-dev && \ 
+    apt-get install -y libffi-dev && \
+    apt-get install -y cython cython3 && \
+    apt-get install -y libopenblas-dev && \
+    apt-get install -y libatlas-base-dev
+
+# Stuff for llvmlite
+RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+
+RUN echo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main >> /etc/apt/sources.list
+RUN echo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-8 main >> /etc/apt/sources.list
+
+RUN sudo apt-get update && apt-get install -y llvm-8-dev
+
+RUN update-alternatives --install \
+        /usr/bin/llvm-config       llvm-config      /usr/bin/llvm-config-8  200 \
+--slave /usr/bin/llvm-ar           llvm-ar          /usr/bin/llvm-ar-8 \
+--slave /usr/bin/llvm-as           llvm-as          /usr/bin/llvm-as-8 \
+--slave /usr/bin/llvm-bcanalyzer   llvm-bcanalyzer  /usr/bin/llvm-bcanalyzer-8 \
+--slave /usr/bin/llvm-cov          llvm-cov         /usr/bin/llvm-cov-8 \
+--slave /usr/bin/llvm-diff         llvm-diff        /usr/bin/llvm-diff-8 \
+--slave /usr/bin/llvm-dis          llvm-dis         /usr/bin/llvm-dis-8 \
+--slave /usr/bin/llvm-dwarfdump    llvm-dwarfdump   /usr/bin/llvm-dwarfdump-8 \
+--slave /usr/bin/llvm-extract      llvm-extract     /usr/bin/llvm-extract-8 \
+--slave /usr/bin/llvm-link         llvm-link        /usr/bin/llvm-link-8 \
+--slave /usr/bin/llvm-mc           llvm-mc          /usr/bin/llvm-mc-8 \
+--slave /usr/bin/llvm-mcmarkup     llvm-mcmarkup    /usr/bin/llvm-mcmarkup-8 \
+--slave /usr/bin/llvm-nm           llvm-nm          /usr/bin/llvm-nm-8 \
+--slave /usr/bin/llvm-objdump      llvm-objdump     /usr/bin/llvm-objdump-8 \
+--slave /usr/bin/llvm-ranlib       llvm-ranlib      /usr/bin/llvm-ranlib-8 \
+--slave /usr/bin/llvm-readobj      llvm-readobj     /usr/bin/llvm-readobj-8 \
+--slave /usr/bin/llvm-rtdyld       llvm-rtdyld      /usr/bin/llvm-rtdyld-8 \
+--slave /usr/bin/llvm-size         llvm-size        /usr/bin/llvm-size-8 \
+--slave /usr/bin/llvm-stress       llvm-stress      /usr/bin/llvm-stress-8 \
+--slave /usr/bin/llvm-symbolizer   llvm-symbolizer  /usr/bin/llvm-symbolizer-8 \
+--slave /usr/bin/llvm-tblgen       llvm-tblgen      /usr/bin/llvm-tblgen-8
+
+# Must use old version of PIP to avoid errors updating existing modules
+RUN pip3 install --upgrade --force-reinstall pip==9.0.3
+RUN pip install --upgrade setuptools wheel
+
+# Test installs to make sure upgrading works
+RUN pip install joblib==0.13.2
+
+# Install all dependency libs for the project.
+COPY requirements.tx2.pip /
+RUN pip install -r /requirements.tx2.pip
+
+# Install and configure the SSH Server
+RUN sudo apt-get update && apt-get install -y openssh-server
+RUN systemctl enable ssh
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+COPY keys/spyros_id_rsa.pub /tmp/tmp.pub
+RUN mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat /tmp/tmp.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm -f /tmp/tmp.pub
+
+RUN service ssh restart
+
+#Expose ports for jupyter lab and mlflow tracking
+EXPOSE 8888
+EXPOSE 4040
+EXPOSE 6006
+EXPOSE 22
+
+ENTRYPOINT ["bash"]
+
