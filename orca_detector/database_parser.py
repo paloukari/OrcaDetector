@@ -27,7 +27,7 @@ from sklearn.preprocessing import LabelEncoder
 # Set a seed so we get consistent results
 np.random.seed(251)
 
-def _label_files(data_path=orca_params.DATA_PATH):
+def label_files(data_path=orca_params.DATA_PATH):
     """
         Walks the data_path looking for *.wav files and builds a dictionary of files and their
         respective labels based on subdirectory names.
@@ -412,7 +412,7 @@ def read_files_and_extract_features(overwrite,
         if files_exist:
             return
         
-    all_samples = _label_files(data_path=orca_params.DATA_PATH)
+    all_samples = label_files(data_path=orca_params.DATA_PATH)
 
     datasets = {orca_params.DatasetType.TRAIN: defaultdict(list),
                 orca_params.DatasetType.VALIDATE: defaultdict(list),
